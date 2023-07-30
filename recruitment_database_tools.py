@@ -9,12 +9,51 @@ class tools:
     def __init__(self):
         self.con = sqlite3.connect("Recruit.db")
         self.cur = self.con.cursor()
+        self.non_dist_combos, self.r4_tag_combos_dist, self.r5_tag_combos_dist, self.r6_tag_combos_dist = self.get_recruit_data_from_text_file()
         self.tag_legend = (
             "ROB", "STR", "SEN", "TOP",
             "MEL", "RNG",
-            "CAS", "DEF", "GUA", "MED", "SNI", "SPE", "SUP", "VAN",
+            "CAS", "DEF", "GUA", "MED",
+            "SNI", "SPE", "SUP", "VAN",
             "AOE", "CDC", "DBF", "DFS", "DPR", "DPS", "FRD", "HEA", "NUK", "SFT", "SLW", "SMN", "SPT", "SRV"
         )
+        self.tag_dict = {
+            "ROB": "Robot",
+            "STR": "Starter",
+            "SEN": "Senior Operator",
+            "TOP": "Top Operator",
+            "MEL": "Melee",
+            "RNG": "Ranged",
+            "CAS": "Caster",
+            "DEF": "Defender",
+            "GUA": "Guard",
+            "MED": "Medic",
+            "SNI": "Sniper",
+            "SPE": "Specialist",
+            "SUP": "Supporter",
+            "VAN": "Vanguard",
+            "AOE": "AOE",
+            "CDC": "Crowd Control",
+            "DBF": "Debuff",
+            "DFS": "Defense",
+            "DPR": "DP-Recovery",
+            "DPS": "DPS",
+            "FRD": "Fast-Redeploy",
+            "HEA": "Healing",
+            "NUK": "Nuker",
+            "SFT": "Shift",
+            "SLW": "Slow",
+            "SMN": "Summon",
+            "SPT": "Support",
+            "SRV": "Survival"
+        }
+        # retrieve recruitment data
+
+
+    def open_db(self):
+        self.con = sqlite3.connect("Recruit.db")
+        self.cur = self.con.cursor()
+
 
     def create_table_Operators(self):
         self.cur.execute("create table Operators(id INTEGER, rarity INTEGER, name TEXT, tags TEXT, PRIMARY KEY (id))")
@@ -24,59 +63,53 @@ class tools:
         self.cur.execute("create table Tags(code TEXT, tag TEXT, type TEXT, PRIMARY KEY (code))")
 
 
-    def create_table_OperatorTags(self):
-        self.cur.execute("create table OperatorTags(id INTEGER, rarity INTEGER, tags TEXT, FOREIGN KEY (id) REFERENCES Operators(id))")
-
-
     def initial_Operators_inserts(self):
         data6 = [
-            (6001, 6, "Angelina", ""),
-            (6002, 6, "Exusiai", ""),
-            (6003, 6, "Eyjafjalla", ""),
-            (6004, 6, "Hoshiguma", ""),
-            (6005, 6, "Ifrit", ""),
-            (6006, 6, "Nightingale", ""),
-            (6007, 6, "Saria", ""),
-            (6008, 6, "Shining", ""),
-            (6009, 6, "Siege", ""),
-            (6010, 6, "SilverAsh", ""),
-            (6011, 6, "Ch'en", ""),  # [1st-anni] update
-            (6012, 6, "Skadi", ""),
-            (6013, 6, "Hellagur", ""),
-            (6014, 6, "Schwarz", ""),
-            (6015, 6, "Magallan", ""),
-            (6016, 6, "Mostima", ""),
-            (6017, 6, "Blaze", ""),
-            (6018, 6, "Aak", ""),
-            (6019, 6, "Ceobe", ""),
-            (6020, 6, "Bagpipe", ""),
-            (6021, 6, "Phantom", ""),
-            (6022, 6, "Weedy", "")
+            (6001, 6, "Exusiai", ""),
+            (6002, 6, "Hoshiguma", ""),
+            (6003, 6, "Ifrit", ""),
+            (6004, 6, "Nightingale", ""),
+            (6005, 6, "Saria", ""),
+            (6006, 6, "Shining", ""),
+            (6007, 6, "Siege", ""),
+            (6008, 6, "SilverAsh", ""),
+            (6009, 6, "Ch'en", ""),  # [1st-anni] update
+            (6010, 6, "Skadi", ""),
+            (6011, 6, "Hellagur", ""),
+            (6012, 6, "Schwarz", ""),
+            (6013, 6, "Magallan", ""),
+            (6014, 6, "Mostima", ""),
+            (6015, 6, "Blaze", ""),
+            (6016, 6, "Aak", ""),
+            (6017, 6, "Ceobe", ""),
+            (6018, 6, "Bagpipe", ""),
+            (6019, 6, "Phantom", ""),
+            (6020, 6, "Weedy", "")
         ]
         data5 = [
-            (5001, 5, "Texas", ""),
-            (5002, 5, "Zima", ""),
-            (5003, 5, "Ptilopsis", ""),
-            (5004, 5, "Silence", ""),
-            (5005, 5, "Warfarin", ""),
-            (5006, 5, "Projekt Red", ""),
-            (5007, 5, "Manticore", ""),
-            (5008, 5, "Cliffheart", ""),
-            (5009, 5, "FEater", ""),
-            (5010, 5, "Provence", ""),
-            (5011, 5, "Blue Poison", ""),
-            (5012, 5, "Firewatch", ""),
-            (5013, 5, "Meteorite", ""),
-            (5014, 5, "Platinum", ""),
-            (5015, 5, "Pramanix", ""),
-            (5016, 5, "Istina", ""),
-            (5017, 5, "Mayer", ""),
+            (5001, 5, "Blue Poison", ""),
+            (5002, 5, "Cliffheart", ""),
+            (5003, 5, "Croissant", ""),
+            (5004, 5, "FEater", ""),
+            (5005, 5, "Firewatch", ""),
+            (5006, 5, "Indra", ""),
+            (5007, 5, "Istina", ""),
+            (5008, 5, "Liskarm", ""),
+            (5009, 5, "Manticore", ""),
+            (5010, 5, "Mayer", ""),
+            (5011, 5, "Meteorite", ""),
+            (5012, 5, "Nearl", ""),
+            (5013, 5, "Platinum", ""),
+            (5014, 5, "Pramanix", ""),
+            (5015, 5, "Projekt Red", ""),
+            (5016, 5, "Provence", ""),
+            (5017, 5, "Ptilopsis", ""),
             (5018, 5, "Specter", ""),
-            (5019, 5, "Indra", ""),
-            (5020, 5, "Nearl", ""),
-            (5021, 5, "Liskarm", ""),
-            (5022, 5, "Vulcan", ""),
-            (5023, 5, "Croissant", ""),
+            (5019, 5, "Silence", ""),
+            (5020, 5, "Texas", ""),
+            (5021, 5, "Vulcan", ""),
+            (5022, 5, "Warfarin", ""),
+            (5023, 5, "Zima", ""),
             (5024, 5, "Nightmare", ""),  # [1st-anni] update
             (5025, 5, "Swire", ""),
             (5026, 5, "Astesia", ""),
@@ -211,78 +244,46 @@ class tools:
         con.commit()
 
 
-    def initial_OperatorTags_inserts(self):
-        self.con.commit()
-
-
-    # def initial_guaranteed_tag_combination_inserts():
-    #     data1 = [
-    #         (1, 1, "ROBGUA"),
-    #         (1, 1, "ROBGUAMEL"),
-    #         (1, 1, "ROBSPTMEL"),
-    #         (1, 1, "ROBSPTGUA"),
-    #         (2, 1, "ROBHEA"),
-    #         (2, 1, "ROBMED"),
-    #         (2, 1, "ROBHEARNG"),
-    #         (2, 1, "ROBHEAMED"),
-    #         (2, 1, "ROBMEDRNG"),
-    #         (3, 1, "NUKSPE"),
-    #         (3, 1, "ROBSPE"),
-    #         (3, 1, "ROBNUK"),
-    #         (3, 1, "NUKSPEMEL"),
-    #         (3, 1, "ROBSPEMEL"),
-    #         (3, 1, "ROBNUKMEL"),
-    #         (3, 1, "ROBNUKSPE"),
-    #         (4, 1, "SPTSNI"),
-    #         (4, 1, "ROBSNI"),
-    #         (4, 1, "ROBSPTSNI"),
-    #         (4, 1, "ROBSNIRNG"),
-    #         (4, 1, "ROBSPTSNI"),
-    #         (4, 1, "SPTSNIRNG")
-    #     ]
-    #     data2 = [
-    #         (3, 2, "STRDEF"),
-    #         (3, 2, "STRDEFMEL"),
-    #         (4, 2, "STRSNI"),
-    #         (4, 2, "STRSNIRNG"),
-    #         (5, 2, "STRVAN"),
-    #         (5, 2, "STRVANMEL")
-    #     ]
-    #     data3 = [
-    #         # N/A
-    #     ]
-
-
     def view_all_tables(self):
-        """The table containing the names of all tables is: sqlite_master"""
+        """Prints the name of all tables in the database"""
 
-        self.cur.execute("select name from sqlite_master where type = 'table'")
+        # The table containing the names of all tables is: sqlite_master
+        self.cur.execute("select name from sqlite_master where type='table'")
         table_list = self.cur.fetchall()
         for row in table_list:
             print(row[0])
 
 
-    def drop_table(self):
-        self.cur.execute("drop table Operators")
+    def select_all_from_Operators(self, get_full_tags=False):
+        operator_list = []
+        res = self.cur.execute("select * from Operators")
+        if not get_full_tags:
+            for row in res:
+                operator_list.append(row)
+            return operator_list
+        else:
+            for row in res:
+                operator_row = self.transform_Operators_row_to_full_tags(row)
+                operator_list.append(operator_row)
+            return operator_list
 
 
-    def delete_all_rows(self):
-        self.cur.execute("delete from Operators")
-        self.con.commit()
-
-
-    def delete_TagCombinations_row(self, tags):
-        """Tags should be a string.
-
-        Refer to the tags legend for the code of each tag."""
-        self.cur.execute("delete from TagCombinations where tags = ?", [tags])
-        self.con.commit()
-
-
-    def update_OperatorTags_row(self, orig_id, orig_rarity, orig_tags, new_id, new_rarity, new_tags):
-        entities = (new_id, new_rarity, new_tags, orig_id, orig_rarity, orig_tags)
-        self.cur.execute("update OperatorTags set id=?, rarity=?, tags=? where id=?, rarity=?, tags=?", entities)
-        self.con.commit()
+    def transform_Operators_row_to_full_tags(self, table_row, just_tags=False):
+        """Use only for entities in sqlite3.Cursor objects"""
+        if not just_tags:
+            tags_col = 3
+            idx = 0
+            operator_row = []
+            for col in table_row:
+                if idx == tags_col:
+                    tags_full = self.decode_tags(col)
+                    operator_row.append(tags_full)
+                else:
+                    operator_row.append(col)
+                idx = idx + 1
+            return operator_row
+        else:
+            return self.decode_tags(table_row[0])
 
 
     def insert_new_operator(self, operator_name: str, rarity: int, tag_list):
@@ -298,7 +299,7 @@ class tools:
         if self.cur.execute("select count(*) from Operators where rarity=?", [rarity]).fetchone()[0] == 0:
             id = (rarity * 4) + 1
         else:
-            id = self.cur.execute("select id from Operators where rarity = ? order by id desc limit 1", [rarity]).fetchone()[0] + 1
+            id = self.cur.execute("select id from Operators where rarity=? order by id desc limit 1", [rarity]).fetchone()[0] + 1
         self.cur.execute("insert into Operators values (?, ?, ?, ?)", (id, rarity, operator_name, operator_tags))
         self.con.commit()
 
@@ -395,20 +396,324 @@ class tools:
         self.con.commit()
 
 
-    def select_all_from_Operators(self):
-        operator_list = []
-        res = self.cur.execute("select * from Operators")
-        for row in res:
-            operator_list.append(row)
-        return operator_list
+    def delete_all_rows(self, table_name):
+        query = "delete from " + table_name
+        self.cur.execute(query)
+        self.con.commit()
+
+
+    def split_tags(self, tags_keys: str):
+        """
+        Splits a string of coded tags into their individual codes.\n
+        Returns them in a list.
+        """
+        if len(tags_keys) % 3 != 0:
+            print("Error: tags string is formatted incorrectly")
+            return
+        tags_list = []
+        while tags_keys:
+            tag = tags_keys[0:3]
+            tags_keys = tags_keys[3:]
+            tags_list.append()
+        return tags_list
+
+
+    def decode_tags(self, tags_keys: str):
+        """
+        Splits a string of coded tags into their full-named tags.\n
+        Returns them in a list
+        """
+        if len(tags_keys) % 3 != 0:
+            print("Error: tags string is formatted incorrectly")
+            return
+        tags_full = []
+        while tags_keys:
+            tag = tags_keys[0:3]
+            tags_keys = tags_keys[3:]
+            tags_full.append(self.tag_dict.get(tag))
+        return tags_full
+
+
+    def get_specific_rarity_tags(self, rarity: int):
+        """
+        Returns a list of tag codes
+        :return:
+        """
+        tags_list = []
+        result = self.cur.execute("select tags from Operators where rarity=?", (str(rarity)))
+        for row in result:
+            for tags in row:
+                if tags not in tags_list:
+                    tags_list.append(tags)
+        return tags_list
+
+
+    def get_non_distinctions_tags(self):
+        """
+        Returns a list of tag codes
+        :return:
+        """
+        rarity_2_3_tags_list = []
+        all_tags = self.get_specific_rarity_tags(2) + self.get_specific_rarity_tags(3)
+        for tags in all_tags:
+            if tags not in rarity_2_3_tags_list:
+                rarity_2_3_tags_list.append(tags)
+        return rarity_2_3_tags_list
+
+
+    def close_db(self):
+        self.con.close()
+
+
+    def get_list_of_combinations(self, item_list, combination_size: int):
+        def combination_util(item_list, k):
+            if k == 0:
+                return[[]]
+            coms_list = []
+            for i in range(len(item_list)):
+                item = item_list[i]
+                rem_item_list = item_list[i+1:]
+                rem_coms_list = combination_util(rem_item_list, k-1)
+                for j in rem_coms_list:
+                    coms_list.append([item, *j])
+            return coms_list
+
+        combinations_list = combination_util(item_list, combination_size)
+        return combinations_list
+
+
+    def calculate(self):
+        """
+        Calculate tag combinations for recruitment
+        """
+
+        def get_recruitment_combinations(tags_list, max_combo=3):
+            """
+            1st-order indices represents number of selected tags\n
+            2nd-order indices hold the tag combination
+            """
+
+            recruitment_tags = []
+            for num_tags in range(1, max_combo+1):
+                tag_combos = []
+                for tag_str in tags_list:
+                    op_tag_list = []
+                    tag_idx = 0
+                    while tag_idx < len(tag_str):
+                        tag = tag_str[tag_idx:tag_idx+3]
+                        op_tag_list.append(tag)
+                        tag_idx += 3
+                    more_tag_combos = self.get_list_of_combinations(op_tag_list, num_tags)
+                    for combo in more_tag_combos:
+                        if combo not in tag_combos:
+                            tag_combos.append(combo)
+                recruitment_tags.append(tag_combos)
+            return recruitment_tags
+
+        def write_to_text_file(list):
+            for row in list:
+                line = ""
+                for combo in row:
+                    line = line + ",".join(combo) + "|"
+                file.write(line + "\n")
+
+        file = open("recruitment_combinations.txt", "w")
+        # get tag combinations for non-distinction operators
+        r2_list = self.get_specific_rarity_tags(2)
+        r3_list = self.get_specific_rarity_tags(3)
+        r2_tag_combos = get_recruitment_combinations(r2_list)
+        r3_tag_combos = get_recruitment_combinations(r3_list)
+        non_dist_combos = []
+        # merge r2 and r3 without duplicates
+        for i in range(len(r2_tag_combos)):
+            row = list(r2_tag_combos[i])
+            row.extend(x for x in r3_tag_combos[i] if x not in row)
+            non_dist_combos.append(row)
+        # save as persistent data
+        file.write("non_dist\n")
+        write_to_text_file(non_dist_combos)
+        self.non_dist_combos = non_dist_combos
+
+        # get tag combinations for rarity 4 operators
+        r4_list = self.get_specific_rarity_tags(4)
+        r4_tag_combos = get_recruitment_combinations(r4_list)
+        r4_tag_combos_dist = []
+        # remove r2 and r3 combos from r4
+        for i in range(len(r4_tag_combos)):
+            row = []
+            for x in r4_tag_combos[i]:
+                if x not in non_dist_combos[i]:
+                    row.append(x)
+            r4_tag_combos_dist.append(row)
+        # save as persistent data
+        file.write("r4\n")
+        write_to_text_file(r4_tag_combos_dist)
+        self.r4_tag_combos_dist = r4_tag_combos_dist
+
+        # get tag combinations for rarity 5 operators
+        r5_list = self.get_specific_rarity_tags(5)
+        r5_tag_combos = get_recruitment_combinations(r5_list)
+        r5_tag_combos_dist = []
+        # remove r2, r3, and r4 combos from r5
+        for i in range(len(r5_tag_combos)):
+            row = []
+            for x in r5_tag_combos[i]:
+                if x not in non_dist_combos[i]:
+                    if x not in r4_tag_combos_dist[i]:
+                        row.append(x)
+            r5_tag_combos_dist.append(row)
+        # save as persistent data
+        file.write("r5\n")
+        write_to_text_file(r5_tag_combos_dist)
+        self.r5_tag_combos_dist = r5_tag_combos_dist
+
+        # get tag combinations for rarity 6 operators
+        r6_list = self.get_specific_rarity_tags(6)
+        r6_tag_combos = get_recruitment_combinations(r6_list)
+        # remove r2, r3, r4, and r5 combos from r6
+        r6_tag_combos_dist = []
+        for i in range(len(r6_tag_combos)):
+            row = []
+            for x in r6_tag_combos[i]:
+                if x not in non_dist_combos[i]:
+                    if x not in r4_tag_combos_dist[i]:
+                        if x not in r5_tag_combos_dist[i]:
+                            row.append(x)
+            r6_tag_combos_dist.append(row)
+        # remove combinations that do not contain TOP OPERATOR
+        for i, row in enumerate(r6_tag_combos_dist):
+            row_temp = [x for x in row if "TOP" in x]
+            r6_tag_combos_dist[i] = row_temp
+        # save as persistent data
+        file.write("r6\n")
+        write_to_text_file(r6_tag_combos_dist)
+        file.close()
+        self.r6_tag_combos_dist = r6_tag_combos_dist
+
+
+    def test_for_overlap_in_tag_combos(self):
+        # test combinations including non_dist_combos
+        intersect = [ [] for _ in range(3)]
+        intersect[0] = [ [] for _ in range(3)]
+        intersect[1] = [ [] for _ in range(2)]
+        intersect[2] = [ [] for _ in range(1)]
+        for i, row in enumerate(self.non_dist_combos):
+            # non_dist[i] and r4[i]
+            intersect[0][0].append([x for x in row if x in self.r4_tag_combos_dist[i]])
+            # non_dist[i] and r5[i]
+            intersect[0][1].append([x for x in row if x in self.r5_tag_combos_dist[i]])
+            # non_dist[i] and r6[i]
+            intersect[0][2].append([x for x in row if x in self.r6_tag_combos_dist[i]])
+        for i, row in enumerate(self.non_dist_combos):
+            # r4[i] and r5[i]
+            intersect[1][0].append([x for x in row if x in self.r5_tag_combos_dist[i]])
+            # r4[i] and r6[i]
+            intersect[1][1].append([x for x in row if x in self.r6_tag_combos_dist[i]])
+        for i, row in enumerate(self.non_dist_combos):
+            # r4[i] and r6[i]
+            intersect[2][0].append([x for x in row if x in self.r6_tag_combos_dist[i]])
+        overlap = False
+        for i, list1 in enumerate(intersect):
+            for j, list2 in enumerate(list1):
+                overlapping_combos = []
+                for k, combo in enumerate(list2):
+                    if combo:
+                        overlapping_combos.append(intersect[i][j][k])
+                if overlapping_combos:
+                    overlap = True
+                    if i == 0:
+                        print("Overlap found between non_dist and r" + str(j+4) + ":")
+                        for row in overlapping_combos:
+                            for combo in row:
+                                print("\t", end="")
+                                print(combo)
+                    else:
+                        print("Overlap found between r" + str(i+4) + " and r" + str(j+4) + ":")
+                        for combo in overlapping_combos:
+                            for combo in row:
+                                print("\t", end="")
+                                print(combo)
+        if not overlap:
+            print("No overlapping tag combinations found")
+
+
+    def get_recruit_data_from_text_file(self):
+        """
+        Chooses based on highest distinction return
+        """
+
+        def read_util(max_combo=3):
+            list = []
+            for r in range(max_combo):
+                line = file.readline()
+                combo = []
+                idx = 0
+                while idx < len(line)-1:
+                    tags = []
+                    while line[idx] != "|":
+                        if line[idx] == ",":
+                            idx += 1
+                        tags.append(line[idx:idx+3])
+                        idx += 3
+                    idx += 1
+                    combo.append(tags)
+                list.append(combo)
+            return list
+
+        file = open("recruitment_combinations.txt", "r")
+        # read non-distinction tags
+        non_dist_combos = []
+        if file.readline() == "non_dist\n":
+            non_dist_combos = read_util()
+        # read r4 tags
+        r4_tag_combos_dist = []
+        if file.readline() == "r4\n":
+            r4_tag_combos_dist = read_util()
+        # read r5 tags
+        r5_tag_combos_dist = []
+        if file.readline() == "r5\n":
+            r5_tag_combos_dist = read_util()
+        # read r6 tags
+        r6_tag_combos_dist = []
+        if file.readline() == "r6\n":
+            r6_tag_combos_dist = read_util()
+        return non_dist_combos, r4_tag_combos_dist, r5_tag_combos_dist, r6_tag_combos_dist
+
+
+    def find_best_tags(self, available_tags: list):
+        """
+        Chooses based on highest distinction return
+        """
+
+        def find_possible_combos(all_combos):
+            # compares each combo in possible_combos with each combo in all_combos
+            possible_combos = []
+            possible_combos.append(self.get_list_of_combinations(available_tags, 1))
+            possible_combos.append(self.get_list_of_combinations(available_tags, 2))
+            possible_combos.append(self.get_list_of_combinations(available_tags, 3))
+            available_combos = []
+            # get combos in possible_combos
+            for possible_combos_row in possible_combos:
+                available_combos_row = []
+                for combo in possible_combos_row:
+                    # get combos in all_combos
+                    for combos_list in all_combos:
+                        if combo in combos_list:
+                            available_combos_row.append(combo)
+                available_combos.append(available_combos_row)
+            return available_combos
+
+        # order available_tags based on self.tag_legend
+        available_tags = [x for x in self.tag_legend if x in available_tags]
+        possible_non_dist_combos = find_possible_combos(self.non_dist_combos)
+        possible_r4_combos = find_possible_combos(self.r4_tag_combos_dist)
+        possible_r5_combos = find_possible_combos(self.r5_tag_combos_dist)
+        possible_r6_combos = find_possible_combos(self.r6_tag_combos_dist)
+        return possible_non_dist_combos, possible_r4_combos, possible_r5_combos, possible_r6_combos
 
 
     # [Il Siracusano] update
-    # SETUP: create a table of operators and the individual tags that could lead to them [formula?]
-    # AUTO-RECRUITING:
-    #   when calculating, create a list from the table above using the give tags
-    #   in the TagCombinations table, search only for operators in the list
-
+    # Recruitment updates typically happen during events with limited-time operators
     # tags legend:
     #   a tag is represented by a string of three letters
     #   Qualification:
@@ -444,21 +749,27 @@ class tools:
     #       SPT - Support
     #       SRV - Survival
 
-    # for row in cur.execute("select * from Tags order by type"):
-    #     print(row)
-
-    def close_db(self):
-        self.con.close()
-
 
 def test():
+    def print_operators_table():
+        operator_table = db_tools.select_all_from_Operators(get_full_tags=True)
+        for row in operator_table:
+            print(row)
+
+    def get_tables():
+        db_tools.view_all_tables()
+
     db_tools = tools()
-    # db_tools.insert_new_operator("Cat", 1, ["ROB", "SPE", "CDC"])
-    # db_tools.update_operator(orig_name="Cat", new_tags=["ROB", "SPE"])
-    # db_tools.delete_operator(1005)
-    operator_table = db_tools.select_all_from_Operators()
-    for row in operator_table:
-        print(row)
+    available_combos = db_tools.find_best_tags(["MEL", "STR", "DEF", "SNI", "TOP"])
+    for i in range(0, 4):
+        if i==0:
+            print("non_distinction tags:")
+        else:
+            print(str(i+3) + "-star tags:")
+        for row in reversed(available_combos[i]):
+            for combo in row:
+                print("\t", end="")
+                print(combo)
     db_tools.close_db()
 
 
