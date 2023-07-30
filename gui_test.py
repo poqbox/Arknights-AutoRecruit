@@ -1,311 +1,328 @@
 import tkinter
 from tkinter import ttk
-import recruitment_database_tools
+import tkinter_ttk_tools as ttkTools
+import recruitment_database_tools as recruitTools
 
 
-class GUI:
-    def __init__(self):
-        self.root = tkinter.Tk()
-        self.root.title("Auto Recruit")
-        self.root.columnconfigure(0, weight=1)
-        self.root.rowconfigure(0, weight=1)
-        self.root.geometry("800x450")
-        self.root.minsize(400, 200)
-        self.root_frame = tkinter.ttk.Frame(self.root)
-        self.root_frame.grid(column=0, row=0, sticky="NSEW")
-        self.root_frame.columnconfigure(0, weight=1)
-        self.root_frame.rowconfigure(0, weight=0, minsize=60)
-        self.root_frame.rowconfigure(1, weight=10)
-        self.root_frame.rowconfigure(2, weight=1)
-        self.tagsQual_dict = {
-            "ROB": "Robot",
-            "STR": "Starter",
-            "SEN": "Senior Operator",
-            "TOP": "Top Operator"
-        }
-        self.tagsPos_dict = {
-            "MEL": "Melee",
-            "RNG": "Ranged"
-        }
-        self.tagsClass_dict = {
-            "CAS": "Caster",
-            "DEF": "Defender",
-            "GUA": "Guard",
-            "MED": "Medic",
-            "SNI": "Sniper",
-            "SPE": "Specialist",
-            "SUP": "Supporter",
-            "VAN": "Vanguard"
-        }
-        self.tagsSpec_dict = {
-            "AOE": "AOE",
-            "CDC": "Crowd Control",
-            "DBF": "Debuff",
-            "DFS": "Defense",
-            "DPR": "DP-Recovery",
-            "DPS": "DPS",
-            "FRD": "Fast-Redeploy",
-            "HEA": "Healing",
-            "NUK": "Nuker",
-            "SFT": "Shift",
-            "SLW": "Slow",
-            "SMN": "Summon",
-            "SPT": "Support",
-            "SRV": "Survival"
-        }
-        self.tagsQual_keysList = list(self.tagsQual_dict.keys())
-        self.tagsQual_valuesList = list(self.tagsQual_dict.values())
-        self.tagsPos_keysList = list(self.tagsPos_dict.keys())
-        self.tagsPos_valuesList = list(self.tagsPos_dict.values())
-        self.tagsClass_keysList = list(self.tagsClass_dict.keys())
-        self.tagsClass_valuesList = list(self.tagsClass_dict.values())
-        self.tagsSpec_keysList = list(self.tagsSpec_dict.keys())
-        self.tagsSpec_valuesList = list(self.tagsSpec_dict.values())
-        # home frame
-        self.home_frame = tkinter.ttk.Frame(self.root_frame)
-        self.home_frame_grid(setup=True)
-        # database tools frame
-        self.database_tools_frame = tkinter.ttk.Frame(self.root_frame)
-        self.database_tools_frame_grid(setup=True)
+def swap_frame_grids(old_frame: ttk.Frame, new_frame: ttk.Frame):
+    """
+    Only works with frames with grids
+    """
+    old_frame.grid_remove()
+    new_frame.grid()
 
-    def switch_frame(self, current_frame, new_frame_grid):
-        """new_frame_grid should be a function that configures the grid of a frame"""
-        current_frame.grid_forget()
-        new_frame_grid
+recruit_tools = recruitTools.tools()
+root = ttkTools.setup("Auto Recruit", window_size=(800, 450), min_size=(400, 200))
+ttkTools.configure_grid(root,
+                        [
+                            [0, None, None, None, 1]
+                        ],
+                        [
+                            [0, None, None, None, 1]
+                        ]
+                        )
+root_frame = ttkTools.frame_setup(root)
+ttkTools.grid(root_frame, column=0, row=0, sticky="NSEW")
+root_frame.columnconfigure(0, weight=1)
+root_frame.rowconfigure(0, weight=1)
+tagsQual_dict = {
+    "ROB": "Robot",
+    "STR": "Starter",
+    "SEN": "Senior Operator",
+    "TOP": "Top Operator"
+}
+tagsPos_dict = {
+    "MEL": "Melee",
+    "RNG": "Ranged"
+}
+tagsClass_dict = {
+    "CAS": "Caster",
+    "DEF": "Defender",
+    "GUA": "Guard",
+    "MED": "Medic",
+    "SNI": "Sniper",
+    "SPE": "Specialist",
+    "SUP": "Supporter",
+    "VAN": "Vanguard"
+}
+tagsSpec_dict = {
+    "AOE": "AOE",
+    "CDC": "Crowd Control",
+    "DBF": "Debuff",
+    "DFS": "Defense",
+    "DPR": "DP-Recovery",
+    "DPS": "DPS",
+    "FRD": "Fast-Redeploy",
+    "HEA": "Healing",
+    "NUK": "Nuker",
+    "SFT": "Shift",
+    "SLW": "Slow",
+    "SMN": "Summon",
+    "SPT": "Support",
+    "SRV": "Survival"
+}
+tagsQual_keysList = list(tagsQual_dict.keys())
+tagsQual_valuesList = list(tagsQual_dict.values())
+tagsPos_keysList = list(tagsPos_dict.keys())
+tagsPos_valuesList = list(tagsPos_dict.values())
+tagsClass_keysList = list(tagsClass_dict.keys())
+tagsClass_valuesList = list(tagsClass_dict.values())
+tagsSpec_keysList = list(tagsSpec_dict.keys())
+tagsSpec_valuesList = list(tagsSpec_dict.values())
 
-    def home_frame_grid(self, setup=False):
-        def home_frame_widgets(self):
-            title = ttk.Label(self.home_frame, text="Arknights AutoRecruit", font=("Helvetica", 16, "bold"), padding=10)
-            title.grid(column=0, row=0, rowspan=20, sticky="NW")
-            ttk.Button(self.home_frame, text="Setup", command=None).grid(column=0, row=2, sticky="SE")
-            menu = tkinter.ttk.Frame(self.home_frame)
-            menu.grid(column=0, row=1, sticky="NSEW")
-            menu.columnconfigure(0, weight=1)
-            menu.rowconfigure(0, weight=0, minsize=30)
-            menu.rowconfigure(1, weight=0, minsize=30)
-            menu.rowconfigure(2, weight=0, minsize=30)
-            ttk.Button(menu, text="Start AutoRecruit", command=None).grid(column=0, row=0, sticky="NE")
-            ttk.Button(menu, text="Database Tools", command=lambda: self.switch_frame(self.home_frame, self.database_tools_frame_grid())).grid(column=0, row=1, sticky="NE")
-            ttk.Button(menu, text="Update Recruitment Operators", command=None).grid(column=0, row=2, sticky="NE")
+# home frame
+home_frame = ttkTools.frame_setup(root_frame)
+ttkTools.grid(home_frame, column=0, row=0, sticky="NSEW")
+ttkTools.configure_grid(home_frame,
+                        [
+                            [0, None, None, None, 1]
+                        ],
+                        [
+                            [0, 60, None, None, 0],
+                            [1, None, None, None, 10],
+                            [2, None, None, None, 1]
+                        ]
+                        )
+home_frame.grid_remove()
 
-        self.home_frame.grid(column=0, row=0, sticky="NSEW")
-        if setup:
-            self.home_frame.columnconfigure(0, weight=1)
-            self.home_frame.rowconfigure(0, weight=0, minsize=60)
-            self.home_frame.rowconfigure(1, weight=10)
-            self.home_frame.rowconfigure(2, weight=1)
-            home_frame_widgets(self)
-            self.home_frame.grid_forget()
+# database_tools frame
+database_tools_frame = ttkTools.frame_setup(root_frame)
+ttkTools.grid(database_tools_frame, column=0, row=0, sticky="NSEW")
+ttkTools.configure_grid(database_tools_frame,
+                        [
+                            [0, 160, None, None, 0],
+                            [1, 200, None, None, 1],
+                            [2, 100, None, None, 0]
+                        ],
+                        [
+                            [0, 50, None, None, 0],
+                            [1, 500, None, None, 1]
+                        ]
+                        )
+database_tools_frame.grid_remove()
 
-    def database_tools_frame_grid(self, setup=False):
-        db_tools = recruitment_database_tools.tools()
+# widgets for the frames
+def home_frame_widgets():
+    title = ttkTools.label_setup(home_frame, display_text="Arknights AutoRecruit", font=("Helvetica", 16, "bold"), text_padding=10)
+    title.grid(column=0, row=0, sticky="NW")
+    setup_button = ttkTools.button_setup(home_frame, display_text="Setup", function=None)
+    setup_button.grid(column=0, row=2, sticky="SE")
+    menu = ttkTools.frame_setup(home_frame)
+    menu.grid(column=0, row=1, sticky="NSEW")
+    ttkTools.configure_grid(menu,
+                            [
+                                [0, None, None, None, 1]
+                            ],
+                            [
+                                [0, 30, None, None, 0],
+                                [1, 30, None, None, 0]
+                            ]
+                            )
+    recruit_button = ttkTools.button_setup(menu, display_text="Enter AutoRecruit", function=None)
+    recruit_button.grid(column=0, row=0, sticky="NE")
+    database_tools_button = ttkTools.button_setup(menu, display_text="Database Tools",
+                                    function=lambda: swap_frame_grids(home_frame, database_tools_frame))
+    database_tools_button.grid(column=0, row=1, sticky="NE")
+    database_tools_button.bind("<ButtonPress>", lambda e: recruit_tools.open_db())
 
-        def database_tools_frame_widgets():
-            def switch_tab(current_frame, new_frame_grid):
-                current_frame.grid_forget()
-                new_frame_grid
+def database_tools_widgets():
+    back_button = ttkTools.button_setup(database_tools_frame, display_text="Back",
+                                        function=lambda: swap_frame_grids(database_tools_frame, home_frame))
+    back_button.grid(column=0, row=0, sticky="NW")
+    back_button.bind("<ButtonPress>", lambda e: recruit_tools.close_db())
 
-            def table_frame_grid(setup=False):
-                table_frame.grid(column=0, row=1, sticky="NSEW")
-                if setup:
-                    table_frame.columnconfigure(0, weight=1, minsize=150)
-                    table_frame.rowconfigure(0, weight=0, minsize=30)
-                    table_frame.rowconfigure(1, weight=1, minsize=150)
-                    table_frame.rowconfigure(1, weight=0, minsize=30)
-                    table_frame_widgets()
-                    table_frame.grid_forget()
+    # buttons to change the displayed data
+    button_display_frame = ttkTools.frame_setup(database_tools_frame)
+    button_display_frame.grid(column=0, row=1, sticky="NSEW")
+    operator_table_button = ttkTools.button_setup(button_display_frame, display_text="Operator Table",
+                                                  function=None)
+    operator_table_button.pack(side="top", anchor="nw")
+    tag_combinations_table_button = ttkTools.button_setup(button_display_frame, display_text="Tag Combinations",
+                                                          function=None)
+    tag_combinations_table_button.pack(side="top", anchor="nw")
+    recalculate_button = ttkTools.button_setup(button_display_frame, display_text="Recalculate\nTag Combinations",
+                                               function=None)
+    recalculate_button.pack(side="top", anchor="nw")
 
-            def table_frame_widgets():
-                def table_view_pack():
-                    def select_row(row, num_cols):
-                        for c in range(num_cols):
-                            print(operator_list[row][c])
+    # table of recruitable operators
+    table_frame, scroll_canvas, operator_table = ttkTools.scrollbar_frame_setup(database_tools_frame, height=300, width=400)
+    table_frame.grid(column=1, row=1)
+    ttkTools.configure_grid(operator_table,
+                            [
+                                [0, 40, None, None, 0],
+                                [1, 10, None, None, 0],
+                                [2, 160, None, None, 0],
+                                [3, 80, None, None, 0]
+                            ],
+                            []
+                            )
+    # configure table
+    def configure_operator_table():
+        operator_list = recruit_tools.select_all_from_Operators()
+        num_rows = len(operator_list)
+        num_cols = len(operator_list[0])
+        table = [[ttk.Entry() for j in range(num_cols)] for i in range(num_rows)]
+        for r in range(num_rows):
+            operator_table.rowconfigure(r, weight=0)
+            for c in range(num_cols):
+                if c == 0:
+                    table[r][c] = ttkTools.entry_setup(operator_table, width=5)
+                if c == 1:
+                    table[r][c] = ttkTools.entry_setup(operator_table, width=2, foreground="grey")
+                if c == 2:
+                    table[r][c] = ttkTools.entry_setup(operator_table, width=20)
+                if c == 3:
+                    table[r][c] = ttkTools.entry_setup(operator_table, width=24)
+                table[r][c].grid(column=c, row=r)
+                table[r][c].insert(0, operator_list[r][c])
+                table[r][c].configure(state="readonly")
+                table[r][c].bind("<FocusIn>", lambda event, row=r, num_cols=num_cols: select_row(row, num_cols))
+        table_frame.update_idletasks()
+        scroll_canvas.configure(scrollregion=scroll_canvas.bbox("all"))
+    configure_operator_table()
 
-                    canvas_frame = ttk.Frame(table_frame, width=350, height=300)
-                    canvas_frame.grid(column=0, row=1, sticky="NW")
-                    canvas_frame.grid_rowconfigure(0, weight=1)
-                    canvas_frame.grid_columnconfigure(0, weight=1)
-                    canvas_frame.grid_propagate(False)
-
-                    # canvas_frame --> canvas
-                    canvas = tkinter.Canvas(canvas_frame)
-                    canvas.grid(column=0, row=0, sticky="NSEW")
-
-                    # v_scrollbar linked to canvas
-                    v_scrollbar = ttk.Scrollbar(canvas_frame, orient="vertical", command=canvas.yview)
-                    v_scrollbar.grid(column=1, row=0, sticky='ns')
-                    canvas.configure(yscrollcommand=v_scrollbar.set)
-
-                    # h_scrollbar linked to canvas
-                    h_scrollbar = ttk.Scrollbar(canvas_frame, orient="horizontal", command=canvas.xview)
-                    h_scrollbar.grid(column=0, row=1, sticky='we')
-                    canvas.configure(xscrollcommand=h_scrollbar.set)
-
-                    # canvas_frame --> canvas --> frame for table
-                    table1 = ttk.Frame(canvas)
-                    table1.grid(column=0, row=0)
-                    table1.columnconfigure(0, weight=0, minsize=40)
-                    table1.columnconfigure(1, weight=0, minsize=10)
-                    table1.columnconfigure(2, weight=0, minsize=160)
-                    table1.columnconfigure(3, weight=0, minsize=80)
-                    canvas.create_window((0, 0), window=table1, anchor='nw')
-
-                    # setup table
-                    operator_list = db_tools.select_all_from_Operators()
-                    num_rows = len(operator_list)
-                    num_cols = len(operator_list[0])
-                    table = [[ttk.Button() for j in range(num_cols)] for i in range(num_rows)]
-                    operator_list = db_tools.select_all_from_Operators()
-                    num_rows = len(operator_list)
-                    num_cols = len(operator_list[0])
-                    for r in range(num_rows):
-                        table1.rowconfigure(r, weight=0)
-                        for c in range(num_cols):
-                            if c == 0:
-                                table[r][c] = ttk.Entry(table1, width=5)
-                            if c == 1:
-                                table[r][c] = ttk.Entry(table1, width=2, foreground="grey")
-                            if c == 2:
-                                table[r][c] = ttk.Entry(table1, width=20)
-                            if c == 3:
-                                table[r][c] = ttk.Entry(table1, width=24)
-                            table[r][c].grid(column=c, row=r)
-                            table[r][c].insert(0, operator_list[r][c])
-                            table[r][c].configure(state="readonly")
-                            table[r][c].bind("<FocusIn>", lambda event, row=r, num_cols=num_cols: select_row(row, num_cols))
-
-                    table1.update_idletasks()
-                    canvas.configure(scrollregion=canvas.bbox("all"))
-
-                self.tableVar = tkinter.StringVar()
-                table_selection = ttk.Combobox(table_frame, textvariable=self.tableVar, width=20, values=("Operator Data", "Recruitment Tree"))
-                table_selection.current(0)
-                table_selection.grid(column=0, row=0, sticky="NW")
-                table_view_pack()
-
-            def operator_form_grid(setup=False):
-                operator_form.grid(column=1, row=1, sticky="NSEW")
-                if setup:
-                    operator_form.columnconfigure(0, weight=0, minsize=150)
-                    operator_form.rowconfigure(0, weight=0, minsize=30)
-                    operator_form.rowconfigure(1, weight=0, minsize=30)
-                    operator_form.rowconfigure(2, weight=0, minsize=150)
-                    operator_form.rowconfigure(3, weight=0, minsize=30)
-                    operator_form_widgets()
-                    operator_form.grid_forget()
-
-            def operator_form_widgets():
-                def insert_operator():
-                    operator_name = nameVar.get()
-                    rarity = rarityVar.get()
-                    TQidx = tagsQual_lbox.curselection()
-                    TPidx = tagsPos_lbox.curselection()
-                    TCidx = tagsClass_lbox.curselection()
-                    TSidx = tagsSpec_lbox.curselection()
-                    tags = []
-                    if TQidx:
-                        for i in TQidx:
-                            tags.append(self.tagsQual_keysList[i])
-                    if TPidx:
-                        for i in TPidx:
-                            tags.append(self.tagsPos_keysList[i])
-                    if TCidx:
-                        for i in TCidx:
-                            tags.append(self.tagsClass_keysList[i])
-                    if TSidx:
-                        for i in TSidx:
-                            tags.append(self.tagsSpec_keysList[i])
-                    nameVar.set("")
-                    rarityVar.set("")
-                    tagsQual_lbox.selection_clear(0, "end")
-                    tagsPos_lbox.selection_clear(0, "end")
-                    tagsClass_lbox.selection_clear(0, "end")
-                    tagsSpec_lbox.selection_clear(0, "end")
-                    db_tools.update_operator(orig_name=operator_name, new_tags=tags)
-                    table_frame_grid(setup=True)
-                    table_frame_grid()
-                    return
-
-                nameVar = tkinter.StringVar()
-                rarityVar = tkinter.StringVar()
-                operator_name_entry = ttk.Entry(operator_form, textvariable=nameVar)
-                operator_name_entry.grid(column=0, row=0, sticky="NW")
-                # operator_name_entry.bind("<FocusIn>", handle_focus_in())
-                # operator_name_entry.bind("<FocusOut>", handle_focus_out())
-                ttk.Combobox(operator_form, textvariable=rarityVar, width=2, values=(1, 2, 3, 4, 5, 6)).grid(column=0, row=1, sticky="NW")
-                # configure_AutoRecruit_frame --> tag_options
-                tag_options = ttk.Frame(operator_form)
-                tag_options.grid(column=0, row=2, sticky="NSEW")
-                ttk.Label(tag_options, text="Tags").pack(side="top", anchor="nw")
-                tagsQual_lbox = tkinter.Listbox(
-                    tag_options,
-                    listvariable=tkinter.StringVar(value=self.tagsQual_valuesList),
-                    selectmode="multiple",
-                    exportselection=False,
-                    relief="ridge",
-                    height=6,
-                    width=14
-                )
-                tagsPos_lbox = tkinter.Listbox(
-                    tag_options,
-                    listvariable=tkinter.StringVar(value=self.tagsPos_valuesList),
-                    selectmode="multiple",
-                    exportselection=False,
-                    relief="ridge",
-                    height=6,
-                    width=7
-                )
-                tagsClass_lbox = tkinter.Listbox(
-                    tag_options,
-                    listvariable=tkinter.StringVar(value=self.tagsClass_valuesList),
-                    selectmode="multiple",
-                    exportselection=False,
-                    relief="ridge",
-                    height=6,
-                    width=9
-                )
-                tagsSpec_lbox = tkinter.Listbox(
-                    tag_options,
-                    listvariable=tkinter.StringVar(value=self.tagsSpec_valuesList),
-                    selectmode="multiple",
-                    exportselection=False,
-                    relief="ridge",
-                    height=6,
-                    width=12
-                )
-                tagsQual_lbox.pack(side="left", anchor="nw", padx=(0, 0))
-                tagsPos_lbox.pack(side="left", anchor="nw", padx=(0, 0))
-                tagsClass_lbox.pack(side="left", anchor="nw", padx=(0, 0))
-                tagsSpec_lbox.pack(side="left", anchor="nw", padx=(0, 0))
-                # ttk.Button(operator_form, text="Add to Database", command=lambda: insert_operator()).grid(column=0, row=3, sticky="NW")
-                ttk.Button(operator_form, text="Update Database", command=lambda: insert_operator()).grid(column=0, row=3, sticky="NW")
-
-            def close_database():
-                db_tools.close_db()
-
-            back_button = ttk.Button(self.database_tools_frame, text="Back", command=lambda: self.switch_frame(self.database_tools_frame, self.home_frame_grid()))
-            back_button.grid(column=0, row=0, sticky="NW")
-            back_button.bind("<ButtonPress>", lambda e: close_database())
-            table_frame = ttk.Frame(self.database_tools_frame)
+    # frame containing the settings to add an operator to the database
+    operator_form = ttk.Frame(database_tools_frame)
+    operator_form.grid(column=2, row=1, sticky="NSEW")
+    ttkTools.configure_grid(operator_form,
+                            [
+                                [0, 150, None, None, 0]
+                            ],
+                            [
+                                [0, 30, None, None, 0],
+                                [1, 30, None, None, 0],
+                                [2, 150, None, None, 0],
+                                [3, 30, None, None, 0]
+                            ]
+                            )
+    def operator_form_widgets():
+        def insert_operator():
+            operator_name = nameVar.get()
+            rarity = rarityVar.get()
+            TQidx = tagsQual_lbox.curselection()
+            TPidx = tagsPos_lbox.curselection()
+            TCidx = tagsClass_lbox.curselection()
+            TSidx = tagsSpec_lbox.curselection()
+            tags = []
+            if TQidx:
+                for i in TQidx:
+                    tags.append(tagsQual_keysList[i])
+            if TPidx:
+                for i in TPidx:
+                    tags.append(tagsPos_keysList[i])
+            if TCidx:
+                for i in TCidx:
+                    tags.append(tagsClass_keysList[i])
+            if TSidx:
+                for i in TSidx:
+                    tags.append(tagsSpec_keysList[i])
+            nameVar.set("")
+            rarityVar.set("")
+            tagsQual_lbox.selection_clear(0, "end")
+            tagsPos_lbox.selection_clear(0, "end")
+            tagsClass_lbox.selection_clear(0, "end")
+            tagsSpec_lbox.selection_clear(0, "end")
+            db_tools.update_operator(orig_name=operator_name, new_tags=tags)
             table_frame_grid(setup=True)
             table_frame_grid()
-            operator_form = ttk.Frame(self.database_tools_frame)
-            operator_form_grid(setup=True)
-            operator_form_grid()
+            return
 
-        self.database_tools_frame.grid(column=0, row=0, sticky="NSEW")
-        if setup:
-            self.database_tools_frame.columnconfigure(0, weight=0, minsize=400)
-            self.database_tools_frame.columnconfigure(1, weight=1, minsize=100)
-            self.database_tools_frame.rowconfigure(0, weight=0, minsize=50)
-            self.database_tools_frame.rowconfigure(1, weight=1, minsize=500)
-            database_tools_frame_widgets()
-            self.database_tools_frame.grid_forget()
+        nameVar = tkinter.StringVar()
+        rarityVar = tkinter.StringVar()
+        operator_name_entry = ttkTools.entry_setup(operator_form, saveTo_variable=nameVar)
+        operator_name_entry.grid(column=0, row=0, sticky="NW")
+        # operator_name_entry.bind("<FocusIn>", handle_focus_in())
+        # operator_name_entry.bind("<FocusOut>", handle_focus_out())
+        rarity_box = ttkTools.spinbox_setup(operator_form, 1, 6, width=4)
+        rarity_box.grid(column=0, row=1, sticky="NW")
+        # frame for packing inside a gridded frame
+        tag_options = ttkTools.frame_setup(operator_form)
+        tag_options.grid(column=0, row=2, sticky="NSEW")
+        tags_label = ttkTools.label_setup(tag_options, display_text="Tags")
+        tags_label.pack(side="top", anchor="nw")
+        tagsQual_lbox = ttkTools.listbox_setup(
+            tag_options,
+            list_variable=tkinter.StringVar(value=tagsQual_valuesList),
+            select_mode="multiple",
+            stay_selected_when_unfocused=True,
+            backdrop="ridge",
+            height=6,
+            width=14
+        )
+        tagsPos_lbox = ttkTools.listbox_setup(
+            tag_options,
+            list_variable=tkinter.StringVar(value=tagsPos_valuesList),
+            select_mode="multiple",
+            stay_selected_when_unfocused=False,
+            backdrop="ridge",
+            height=6,
+            width=7
+        )
+        tagsClass_lbox = ttkTools.listbox_setup(
+            tag_options,
+            list_variable=tkinter.StringVar(value=tagsClass_valuesList),
+            select_mode="multiple",
+            stay_selected_when_unfocused=False,
+            backdrop="ridge",
+            height=6,
+            width=9
+        )
+        tagsSpec_lbox = ttkTools.listbox_setup(
+            tag_options,
+            list_variable=tkinter.StringVar(value=tagsSpec_valuesList),
+            select_mode="multiple",
+            stay_selected_when_unfocused=False,
+            backdrop="ridge",
+            height=6,
+            width=12
+        )
+        tagsQual_lbox.pack(side="left", anchor="nw", padx=(0, 0))
+        tagsPos_lbox.pack(side="left", anchor="nw", padx=(0, 0))
+        tagsClass_lbox.pack(side="left", anchor="nw", padx=(0, 0))
+        tagsSpec_lbox.pack(side="left", anchor="nw", padx=(0, 0))
+        # buttons to update the table
+        def update_recruit_db(statement_type: str):
+            operator_name = nameVar.get()
+            rarity = rarityVar.get()
+            TQidx = tagsQual_lbox.curselection()
+            TPidx = tagsPos_lbox.curselection()
+            TCidx = tagsClass_lbox.curselection()
+            TSidx = tagsSpec_lbox.curselection()
+            tags = []
+            if TQidx:
+                for i in TQidx:
+                    tags.append(self.tagsQual_keysList[i])
+            if TPidx:
+                for i in TPidx:
+                    tags.append(self.tagsPos_keysList[i])
+            if TCidx:
+                for i in TCidx:
+                    tags.append(self.tagsClass_keysList[i])
+            if TSidx:
+                for i in TSidx:
+                    tags.append(self.tagsSpec_keysList[i])
+            nameVar.set("")
+            rarityVar.set("")
+            tagsQual_lbox.selection_clear(0, "end")
+            tagsPos_lbox.selection_clear(0, "end")
+            tagsClass_lbox.selection_clear(0, "end")
+            tagsSpec_lbox.selection_clear(0, "end")
+            if statement_type == "insert":
+                recruit_tools.insert_new_operator(operator_name=operator_name, rarity=rarity, tag_list=tags)
+            if statement_type == "update":
+                db_tools.update_operator(orig_name=operator_name, new_tags=tags)
+            configure_operator_table()
 
-    def start(self):
-        self.home_frame_grid()
-        self.root.mainloop()
+        # add_operator_button = ttkTools.button_setup(operator_form, display_text="Add to Database", function=lambda: update_recruit_db("insert"))
+        # add_operator_button.grid(column=0, row=3, sticky="NW")
+        update_operator_button = ttkTools.button_setup(operator_form, display_text="Update Database", function=lambda: update_recruit_db("update"))
+        update_operator_button.grid(column=0, row=3, sticky="NW")
+
+    operator_form_widgets()
+
+home_frame_widgets()
+database_tools_widgets()
+home_frame.grid()
 
 
-Arknights_AutoRecruit = GUI()
-Arknights_AutoRecruit.start()
+root.mainloop()
