@@ -102,6 +102,9 @@ def button_setup(parent, display_text: str=None, function=None, width=None, text
 
 
 def checkbox_setup(parent, display_text: str=None, saveValueTo_variable=None, value_when_checked=1, value_when_unchecked=0, width=None, state=None):
+    """
+    Use tkinter type variables when using saveValueTo_variable, such as tkinter.StringVar(), and use .get() to retrieve the value
+    """
     checkbutton = ttk.Checkbutton(parent,
                                   text=display_text,
                                   variable=saveValueTo_variable,
@@ -114,6 +117,9 @@ def checkbox_setup(parent, display_text: str=None, saveValueTo_variable=None, va
 
 
 def combobox_setup(parent, values, saveTo_variable=None, font=None, width=None, background=None, state=None):
+    """
+    Use tkinter type variables when using saveValueTo_variable, such as tkinter.StringVar(), and use .get() to retrieve the value
+    """
     combobox = ttk.Combobox(parent,
                             values=values,
                             textvariable=saveTo_variable,
@@ -126,6 +132,9 @@ def combobox_setup(parent, values, saveTo_variable=None, font=None, width=None, 
 
 
 def entry_setup(parent, saveTo_variable: tkinter.StringVar=None, font=None, width=None, foreground=None, state=None):
+    """
+    Use tkinter type variables when using saveValueTo_variable, such as tkinter.StringVar(), and use .get() to retrieve the value
+    """
     entry = ttk.Entry(parent,
                       textvariable=saveTo_variable,
                       font=font,
@@ -150,7 +159,7 @@ def label_setup(parent, display_text: str=None, font=None, width=None, backgroun
 
 def listbox_setup(parent, list_variable=None, select_mode=None, stay_selected_when_unfocused=None, backdrop=None, height=None, width=None, state=None):
     """
-
+    Use tkinter type variables when using list_variable
     :param parent:
     :param saveTo_variable:
     :param select_mode:
@@ -181,7 +190,10 @@ def progressbar_setup(parent, orientation, length, max_value, progress_mode):
                                   )
 
 
-def radiobutton_setup(parent, display_text: str=None, saveValueTo_variable=None, value=100.0, width=None, padding=None, state=None):
+def radiobutton_setup(parent, display_text: str=None, saveValueTo_variable=None, value=None, width=None, padding=None, state=None):
+    """
+    Use tkinter type variables when using saveValueTo_variable, such as tkinter.StringVar(), and use .get() to retrieve the value
+    """
     radiobutton = ttk.Radiobutton(parent,
                                   text=display_text,
                                   variable=saveValueTo_variable,
@@ -196,6 +208,7 @@ def radiobutton_setup(parent, display_text: str=None, saveValueTo_variable=None,
 def spinbox_setup(parent, start_value=None, end_value=None, values=None, increment=None, saveTo_variable=None, font=None, width=None, state=None):
     """
     values overrides from_/to/increment
+    Use tkinter type variables when using saveValueTo_variable, such as tkinter.StringVar(), and use .get() to retrieve the value
     :param parent:
     :param start_value:
     :param end_value:
