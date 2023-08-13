@@ -231,7 +231,7 @@ def spinbox_setup(parent, start_value=None, end_value=None, values=None, increme
     return spinbox
 
 
-def scrollbar_frame_setup(parent, height, width, sticky: str=None):
+def scrollbar_frame_setup(parent, height, width, sticky_scrollframe: str="NSEW", sticky_content: str="NSEW"):
     """
     return: list[canvas_frame, canvas, content_frame]\n
     hierarchy: canvas_frame --> canvas --> content_frame\n
@@ -242,14 +242,14 @@ def scrollbar_frame_setup(parent, height, width, sticky: str=None):
     [canvas].configure(scrollregion=[canvas].bbox("all"))
     """
     canvas_frame = frame_setup(parent, width=width, height=height)
-    canvas_frame.grid(column=0, row=1, sticky="NW")
+    canvas_frame.grid(column=0, row=1, sticky=sticky_scrollframe)
     canvas_frame.grid_columnconfigure(0, weight=1)
     canvas_frame.grid_rowconfigure(0, weight=1)
     canvas_frame.grid_propagate(False)
 
     # canvas_frame --> canvas
     canvas = tkinter.Canvas(canvas_frame)
-    canvas.grid(column=0, row=0, sticky="NSEW")
+    canvas.grid(column=0, row=0, sticky=sticky_content)
 
     # v_scrollbar linked to canvas
     v_scrollbar = ttk.Scrollbar(canvas_frame, orient="vertical", command=canvas.yview)
@@ -263,7 +263,7 @@ def scrollbar_frame_setup(parent, height, width, sticky: str=None):
 
     # canvas_frame --> canvas --> frame
     content_frame = ttk.Frame(canvas)
-    content_frame.grid(column=0, row=0, sticky=sticky)
+    content_frame.grid(column=0, row=0)
     canvas.create_window((0, 0), window=content_frame, anchor='nw')
 
     return canvas_frame, canvas, content_frame
