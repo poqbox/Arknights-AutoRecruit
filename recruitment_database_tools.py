@@ -268,6 +268,18 @@ class tools:
             return operator_list
 
 
+    def select_operator_by_id(self, operator_id: int):
+        """
+        Returns the operator data of the given operator id as a tuple, where:\n
+        tuple[0] = operator id\n
+        tuple[1] = operator rarity\n
+        tuple[2] = operator name\n
+        tuple[3] = operator tags\n
+        Returns None if operator id is not found
+        """
+        return self.cur.execute("select * from Operators where id=?", [str(operator_id)]).fetchone()
+
+
     def transform_Operators_row_to_full_tags(self, table_row, just_tags=False):
         """Use only for entities in sqlite3.Cursor objects"""
         if not just_tags:
@@ -296,11 +308,11 @@ class tools:
                 print("One of the tags is not a valid tag")
                 return
         operator_tags = "".join(tag_list)
-        if self.cur.execute("select count(*) from Operators where rarity=?", [rarity]).fetchone()[0] == 0:
+        if self.cur.execute("select count(*) from Operators where rarity=?", [str(rarity)]).fetchone()[0] == 0:
             id = (rarity * 4) + 1
         else:
-            id = self.cur.execute("select id from Operators where rarity=? order by id desc limit 1", [rarity]).fetchone()[0] + 1
-        self.cur.execute("insert into Operators values (?, ?, ?, ?)", (id, rarity, operator_name, operator_tags))
+            id = self.cur.execute("select id from Operators where rarity=? order by id desc limit 1", [str(rarity)]).fetchone()[0] + 1
+        self.cur.execute("insert into Operators values (?, ?, ?, ?)", (str(id), str(rarity), operator_name, operator_tags))
         self.con.commit()
 
 
@@ -392,7 +404,7 @@ class tools:
 
 
     def delete_operator(self, id):
-        self.cur.execute("delete from Operators where id=?", [id])
+        self.cur.execute("delete from Operators where id=?", [str(id)])
         self.con.commit()
 
 
@@ -414,14 +426,14 @@ class tools:
         while tags_keys:
             tag = tags_keys[0:3]
             tags_keys = tags_keys[3:]
-            tags_list.append()
+            tags_list.append(tag)
         return tags_list
 
 
     def decode_tags(self, tags_keys: str):
         """
         Splits a string of coded tags into their full-named tags.\n
-        Returns them in a list
+        Returns them in a list.
         """
         if len(tags_keys) % 3 != 0:
             print("Error: tags string is formatted incorrectly")
@@ -759,17 +771,21 @@ def test():
     def get_tables():
         db_tools.view_all_tables()
 
+    def test_tag_calculator():
+        available_combos = db_tools.find_best_tags(["MEL", "STR", "DEF", "SNI", "TOP"])
+        for i in range(0, 4):
+            if i == 0:
+                print("non_distinction tags:")
+            else:
+                print(str(i + 3) + "-star tags:")
+            for row in reversed(available_combos[i]):
+                for combo in row:
+                    print("\t", end="")
+                    print(combo)
+
     db_tools = tools()
-    available_combos = db_tools.find_best_tags(["MEL", "STR", "DEF", "SNI", "TOP"])
-    for i in range(0, 4):
-        if i==0:
-            print("non_distinction tags:")
-        else:
-            print(str(i+3) + "-star tags:")
-        for row in reversed(available_combos[i]):
-            for combo in row:
-                print("\t", end="")
-                print(combo)
+    # test code here
+    print()
     db_tools.close_db()
 
 
