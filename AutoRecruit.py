@@ -17,6 +17,9 @@ import recruitment_database_tools as recruitTools
 #   --psm N
 # binding events in tkinter info: https://stackoverflow.com/questions/7299955/tkinter-binding-a-function-with-arguments-to-a-widget
 
+overall_ver = "1.0.0"
+recruit_ver = "Il Siracusano"
+AutoRecruit_ver = overall_ver + ".[" + recruit_ver + "]"
 
 # ------------------------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------------------------
@@ -333,6 +336,8 @@ def database_tools_widgets():
     nameVar = tkinter.StringVar()
     rarityVar = tkinter.StringVar()
     idVar = tkinter.StringVar()
+    name_entry = ttkTools.entry_setup(operator_form, saveTo_variable=nameVar)
+    name_entry.grid(column=0, row=0, sticky="NW")
     # frame for packing tag options inside a gridded frame
     tag_options = ttkTools.frame_setup(operator_form)
     tag_options.grid(column=0, row=2, sticky="NSEW")
@@ -411,6 +416,7 @@ def database_tools_widgets():
             tagsPos_lbox.selection_clear(0, "end")
             tagsClass_lbox.selection_clear(0, "end")
             tagsSpec_lbox.selection_clear(0, "end")
+            name_entry.configure(foreground="black")
             idVar.set(operator_list[row][0])
             rarityVar.set(operator_list[row][1])
             nameVar.set(operator_list[row][2])
@@ -508,8 +514,28 @@ def database_tools_widgets():
     operator_table_button.pack(side="top", anchor="nw")
     tag_combinations_table_button = ttkTools.button_setup(button_display_frame, display_text="Tag Combinations", function=lambda: swap_table_frame_grids(2))
     tag_combinations_table_button.pack(side="top", anchor="nw")
-    recalculate_button = ttkTools.button_setup(button_display_frame, display_text="Recalculate\nTag Combinations", function=[recruit_tools.calculate(), configure_tables()])
+    recalculate_button = ttkTools.button_setup(button_display_frame, display_text="Recalculate\nTag Combinations", function=lambda: [recruit_tools.calculate(), configure_tables()])
     recalculate_button.pack(side="top", anchor="nw")
+    def open_help_window():
+        help_window = tkinter.Toplevel(root)
+        help_window.title("Instructions")
+        help_window.geometry("400x300")
+        text1 = "Using the database"
+        text2 = "Updating an operator:\n" \
+                "        Requires name, tags\n" \
+                "Adding a new operator:\n" \
+                "        Requires name, rarity, tags\n" \
+                "Deleting an operator:\n" \
+                "        Requires operator ID"
+        label1 = ttkTools.label_setup(help_window, display_text=text1, font=("Helvetica", 12, "bold"))
+        label1.pack(side="top", anchor="nw")
+        label2 = ttkTools.label_setup(help_window, display_text=text2)
+        label2.pack(side="top", anchor="nw")
+    help_button = ttkTools.button_setup(button_display_frame, display_text="Help", function=lambda: open_help_window(), width=4)
+    help_button.pack(side="top", anchor="nw")
+    version_label = ttkTools.label_setup(button_display_frame, display_text="ver. " + AutoRecruit_ver, font=("Courier", 8))
+    version_label.configure(foreground="grey")
+    version_label.pack(side="bottom", anchor="sw")
 
 
 
@@ -517,10 +543,24 @@ def database_tools_widgets():
     # remaining operator form setup --start--
 
     def operator_form_widgets():
-        operator_name_entry = ttkTools.entry_setup(operator_form, saveTo_variable=nameVar)
-        operator_name_entry.grid(column=0, row=0, sticky="NW")
-        # operator_name_entry.bind("<FocusIn>", handle_focus_in())
-        # operator_name_entry.bind("<FocusOut>", handle_focus_out())
+        # methods for implementing a default value in the name_entry widget
+        def name_entry_setup():
+            name_entry.configure(foreground="grey")
+            name_entry.insert(0, "Operator Name")
+        def name_entry_FocusIn():
+            name = nameVar.get()
+            if not name or name.lower() == "operator name":
+                name_entry.configure(foreground="black")
+                name_entry.delete(0, "end")
+        def name_entry_FocusOut():
+            name = nameVar.get()
+            if not name or name.lower() == "operator name":
+                name_entry.configure(foreground="grey")
+                name_entry.delete(0, "end")
+                name_entry.insert(0, "Operator Name")
+        name_entry_setup()
+        name_entry.bind("<FocusIn>", lambda e: name_entry_FocusIn())
+        name_entry.bind("<FocusOut>", lambda e: name_entry_FocusOut())
         rarity_box = ttkTools.spinbox_setup(operator_form, 1, 6, saveTo_variable=rarityVar, width=4)
         rarity_box.grid(column=0, row=1, sticky="NW")
         # buttons to update the table
@@ -582,13 +622,14 @@ def database_tools_widgets():
                 tagsPos_lbox.selection_clear(0, "end")
                 tagsClass_lbox.selection_clear(0, "end")
                 tagsSpec_lbox.selection_clear(0, "end")
+                name_entry_setup()
                 configure_tables()
         add_operator_button = ttkTools.button_setup(operator_form, display_text="Add to Database", function=lambda: update_recruit_db("insert"))
         add_operator_button.grid(column=0, row=3, sticky="NW")
         update_operator_button = ttkTools.button_setup(operator_form, display_text="Update Database", function=lambda: update_recruit_db("update"))
         update_operator_button.grid(column=0, row=4, sticky="NW")
-        undo_button = ttkTools.button_setup(operator_form, display_text="Undo", function=None, width=5)
-        undo_button.grid(column=0, row=5, sticky="NW")
+        # undo_button = ttkTools.button_setup(operator_form, display_text="Undo", function=None, width=5)
+        # undo_button.grid(column=0, row=5, sticky="NW")
         # delete operator options
         operator_id_entry = ttkTools.entry_setup(operator_form, saveTo_variable=idVar, width=6)
         operator_id_entry.grid(column=0, row=6, sticky="SE")
