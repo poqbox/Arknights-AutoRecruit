@@ -181,6 +181,48 @@ def listbox_setup(parent, list_variable=None, select_mode=None, stay_selected_wh
     return listbox
 
 
+def dragdrop_listbox_setup(parent, list_variable=None, stay_selected_when_unfocused=None, backdrop=None, height=None, width=None, state=None):
+    """
+    tkinter listbox with dragable items for reordering
+    Use tkinter type variables when using list_variable
+    :param parent:
+    :param saveTo_variable:
+    :param stay_selected_when_unfocused:
+    :param backdrop: Literal["raised", "sunken", "flat", "ridge", "solid", "groove"]
+    :param height:
+    :param width:
+    :return:
+    """
+    class dragdrop_listbox(tkinter.Listbox):
+        def __init__(self):
+            tkinter.Listbox.__init__(self,
+                                     parent,
+                                     listvariable=list_variable,
+                                     selectmode="single",
+                                     exportselection=stay_selected_when_unfocused,
+                                     relief=backdrop,
+                                     height=height,
+                                     width=width,
+                                     state=state
+                                     )
+            self.held_index = None
+            self.bind("<Button-1>", self.get_selected_index)
+            self.bind("<B1-Motion>", self.shift_item)
+
+        def get_selected_index(self, event):
+            self.held_index = self.nearest(event.y)
+
+        def shift_item(self, event):
+            idx = self.nearest(event.y)
+            if idx != self.held_index:
+                item = self.get(self.held_index)
+                self.delete(self.held_index)
+                self.insert(idx, item)
+                self.held_index = idx
+
+    return dragdrop_listbox()
+
+
 def progressbar_setup(parent, orientation, length, max_value, progress_mode):
     progressbar = ttk.Progressbar(parent,
                                   orient=orientation,
@@ -233,6 +275,7 @@ def spinbox_setup(parent, start_value=None, end_value=None, values=None, increme
 
 def scrollbar_frame_setup(parent, height, width, sticky_scrollframe: str="NSEW", sticky_content: str="NSEW"):
     """
+    tkinter frame with scrollbars
     return: list[canvas_frame, canvas, content_frame]\n
     hierarchy: canvas_frame --> canvas --> content_frame\n
     Instructions:\n
