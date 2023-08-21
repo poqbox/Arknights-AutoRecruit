@@ -4,8 +4,9 @@ import subprocess
 import time
 import win32gui
 import tkinter
-from tkinter import ttk
+from tkinter import font
 from tkinter import scrolledtext as tk_scrolledtext
+from tkinter import ttk
 import tkinter_ttk_tools as ttkTools
 import desktop_control as desktop
 import screen_capture_tools
@@ -17,9 +18,29 @@ import recruitment_database_tools as recruitTools
 #   --psm N
 # binding events in tkinter info: https://stackoverflow.com/questions/7299955/tkinter-binding-a-function-with-arguments-to-a-widget
 
-overall_ver = "1.0.0"
-recruit_ver = "Il Siracusano"
-AutoRecruit_ver = overall_ver + ".[" + recruit_ver + "]"
+def update_data():
+    global overall_ver
+    global recruit_ver
+    global AutoRecruit_ver
+    global emulator_path
+    global emulator_title
+    global data
+
+    with open("data.txt", "r") as data_file:
+        data = data_file.readlines()
+
+    # overall_ver = "1.0.0"
+    # recruit_ver = "Il Siracusano"
+    overall_ver = data[0][:-1]
+    recruit_ver = data[1][:-1]
+    AutoRecruit_ver = overall_ver + ".[" + recruit_ver + "]"
+
+    # path to Google Play Games
+    # emulator_title = "Google Play Games beta"
+    # emulator_path = r'C:\Program Files\Google\Play Games\Bootstrapper.exe'
+    emulator_path = data[2][:-1]
+    emulator_title = data[3][:-1]
+update_data()
 
 # ------------------------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------------------------
@@ -171,10 +192,6 @@ def start_AutoRecruit():
 
 
 
-# path to Google Play Games
-emulator_title = "Google Play Games beta"
-emulator_path = r'C:\Program Files\Google\Play Games\Bootstrapper.exe'
-emu_hdl = None
 screen_res = (1920, 1080)
 scr_mdpt = (int(screen_res[0] / 2), int(screen_res[1] / 2))
 recruit_tools = recruitTools.tools()
@@ -186,7 +203,7 @@ def swap_frame_grids(old_frame: ttk.Frame, new_frame: ttk.Frame):
     old_frame.grid_remove()
     new_frame.grid()
 
-root = ttkTools.setup("Auto Recruit", window_size=(1024, 450), min_size=(400, 200))
+root = ttkTools.setup("Auto Recruit", window_size=(992, 450), min_size=(500, 200))
 ttkTools.configure_grid(root,
                         [
                             [0, None, None, None, 1]
@@ -260,21 +277,39 @@ ttkTools.configure_grid(home_frame,
                         )
 home_frame.grid_remove()
 
-# database_tools frame
-database_tools_frame = ttkTools.frame_setup(root_frame)
-ttkTools.grid(database_tools_frame, column=0, row=0, sticky="NSEW")
-ttkTools.configure_grid(database_tools_frame,
+# AutoRecruit frame
+auto_recruit_frame = ttkTools.frame_setup(root_frame)
+ttkTools.grid(auto_recruit_frame, column=0, row=0, sticky="NSEW")
+ttkTools.configure_grid(auto_recruit_frame,
                         [
-                            [0, 160, None, None, 0],
-                            [1, 200, None, None, 1],
-                            [2, 100, None, None, 0]
+                            [0, 134, None, None, 0],
+                            [1, 400, None, None, 1],
+                            [2, 200, None, None, 0]
                         ],
                         [
                             [0, 50, None, None, 0],
                             [1, 340, None, None, 1]
                         ]
                         )
+auto_recruit_frame.grid_remove()
+
+# database_tools frame
+database_tools_frame = ttkTools.frame_setup(root_frame)
+ttkTools.grid(database_tools_frame, column=0, row=0, sticky="NSEW")
+ttkTools.configure_grid(database_tools_frame,
+                        [
+                            [0, 134, None, None, 0],
+                            [1, 400, None, None, 1],
+                            [2, 100, None, None, 0]
+                        ],
+                        [
+                            [0, 40, None, None, 0],
+                            [1, 340, None, None, 1],
+                            [2, 50, None, None, 0]
+                        ]
+                        )
 database_tools_frame.grid_remove()
+
 
 # widgets for the frames
 def home_frame_widgets():
@@ -291,21 +326,131 @@ def home_frame_widgets():
                                 [1, 30, None, None, 0]
                             ]
                             )
-    recruit_button = ttkTools.button_setup(menu, display_text="Enter AutoRecruit", function=None)
+    recruit_button = ttkTools.button_setup(menu, display_text="Enter AutoRecruit",
+                                           function=lambda: swap_frame_grids(home_frame, auto_recruit_frame))
     recruit_button.grid(column=0, row=0, sticky="NE")
     database_tools_button = ttkTools.button_setup(menu, display_text="Database Tools",
-                                    function=lambda: swap_frame_grids(home_frame, database_tools_frame))
+                                                  function=lambda: swap_frame_grids(home_frame, database_tools_frame))
     database_tools_button.grid(column=0, row=1, sticky="NE")
     database_tools_button.bind("<ButtonPress>", lambda e: recruit_tools.open_db())
     setup_button = ttkTools.button_setup(home_frame, display_text="Setup", function=None)
     setup_button.grid(column=0, row=2, sticky="SE")
 
+
+def auto_recruit_widgets():
+    back_button = ttkTools.button_setup(auto_recruit_frame, display_text="Back",
+                                        function=lambda: swap_frame_grids(auto_recruit_frame, home_frame))
+    back_button.grid(column=0, row=0, sticky="NW")
+
+    # output textbox
+    output_textbox = tk_scrolledtext.ScrolledText(auto_recruit_frame, height=18)
+    output_textbox.grid(column=1, row=1, sticky="NEW")
+    text_font = font.nametofont(output_textbox.cget("font"))
+    output_textbox.tag_configure("indent", lmargin1=text_font.measure("    "), lmargin2=text_font.measure("    "))
+    output_textbox.configure(state="disabled")
+    def output_text(text):
+        output_textbox.configure(state="normal")
+        output_textbox.insert("end", text)
+        output_textbox.configure(state="disabled")
+    def output_indented_text(text):
+        output_textbox.configure(state="normal")
+        output_textbox.insert("end", text, "indent")
+        output_textbox.configure(state="disabled")
+
+    # frame for packing buttons
+    button_display_frame = ttkTools.frame_setup(auto_recruit_frame)
+    button_display_frame.grid(column=0, row=1, sticky="NSEW")
+    get_window_titles_button = ttkTools.button_setup(button_display_frame, display_text="Get opened\nwindow titles",
+                                                     function=lambda: [output_text("Window titles:\n"),
+                                                                       output_indented_text(screen_capture_tools.get_window_titles()),
+                                                                       output_text("\n")])
+    get_window_titles_button.pack(side="top", anchor="nw")
+    def open_help_window():
+        help_window = tkinter.Toplevel(root)
+        help_window.title("Instructions")
+        help_window.geometry("400x300")
+        text1 = "Using AutoRecruit"
+        text2 = "To get the emulator's path, right click on the application and select [Copy as path].\n" \
+                "To get the emulator's window title, try using [Get opened window titles] button.\n" \
+                "This button will output a list of presently open window titles, separated by curly brackets. " \
+                "If the emulator is open, it's title will appear in the output box.\n" \
+                "If the emulator is open, it's window title will appear in the output box.\n" \
+                "If matching tags are found, AutoRecruit will recruit with no tags selected at the specified recruit time."
+        label1 = ttkTools.label_setup(help_window, display_text=text1, font=("Helvetica", 12, "bold"))
+        label1.pack(side="top", anchor="nw")
+        label2 = ttkTools.label_setup(help_window, display_text=text2)
+        label2.pack(side="top", anchor="nw")
+        label2.configure(wraplength=400)
+    help_button = ttkTools.button_setup(button_display_frame, display_text="Help", function=lambda: open_help_window(), width=4)
+    help_button.pack(side="top", anchor="nw")
+
+
+
+
+    # settings frame setup --start--
+
+    def recruitment_time_values():
+        times = []
+        for hours in range(1, 10):
+            if hours < 10:
+                hours = f"0{hours}"
+            for minutes in range(0, 60, 10):
+                if minutes < 10:
+                    minutes = f"0{minutes}"
+                times.append(f"{hours}:{minutes}")
+                if hours == f"09":
+                    break
+        return times
+
+    # frame containing the setup for AutoRecruit
+    settings_frame = ttkTools.frame_setup(auto_recruit_frame)
+    settings_frame.grid(column=2, row=1, sticky="NSEW")
+    emulator_path_entry = ttkTools.entry_setup(settings_frame, width=32)
+    emulator_path_entry.pack(side="top", anchor="nw")
+    emulator_title_entry = ttkTools.entry_setup(settings_frame, width=32)
+    emulator_title_entry.pack(side="top", anchor="nw")
+
+    # listbox for ordering tag priorities
+    priority_label = ttkTools.label_setup(settings_frame, display_text="Priority (top-to-bottom)")
+    priority_label.pack(side="top", anchor="nw")
+    priority_listbox = ttkTools.dragdrop_listbox_setup(
+        settings_frame,
+        list_variable=tkinter.StringVar(value=["6-star", "5-star", "4-star", "Distinctions"]),
+        backdrop="ridge",
+        height=6,
+        width=14
+    )
+    priority_listbox.pack(side="top", anchor="nw")
+
+    recruitment_time_spinbox = ttkTools.spinbox_setup(settings_frame, values=recruitment_time_values(), width=8, state="readonly")
+    recruitment_time_spinbox.pack(side="top", anchor="nw")
+    recruitment_time_spinbox.set("01:00")
+    expedited_plans_checkbox = ttkTools.checkbox_setup(settings_frame, display_text="Use expedited plans", saveValueTo_variable=None)
+    expedited_plans_checkbox.pack(side="top", anchor="nw")
+    def update_path_and_title():
+        data[2] = emulator_path_entry.get()
+        data[3] = emulator_title_entry_entry.get()
+        with open("data.txt", "w") as data_file:
+            data_file.writelines(data)
+        update_data()
+    save_button = ttkTools.button_setup(settings_frame, display_text="Save", function=lambda: update_path_and_title())
+    save_button.pack(side="top", anchor="nw")
+    # screen_capture_checkbox = ttkTools.checkbox_setup(settings_frame, display_text="Show screen capture", saveValueTo_variable=None)
+    # screen_capture_checkbox.pack(side="top", anchor="nw")
+    start_button = ttkTools.button_setup(settings_frame, display_text="Start", function=lambda: start_AutoRecruit())
+    start_button.pack(side="top", anchor="nw")
+    emulator_path_entry.insert(0, emulator_path)
+    emulator_title_entry.insert(0, emulator_title)
+
+    # settings frame setup --end--
+
+
+
+
 def database_tools_widgets():
     back_button = ttkTools.button_setup(database_tools_frame, display_text="Back",
                                         function=lambda: [swap_frame_grids(database_tools_frame, home_frame),
-                                                          recruit_tools.calculate(),
-                                                          recruit_tools.close_db()
-                                                          ])
+                                                          recruit_tools.calculate(), recruit_tools.close_db()])
     back_button.grid(column=0, row=0, sticky="NW")
 
 
@@ -314,8 +459,8 @@ def database_tools_widgets():
     # initial operator form setup --start--
 
     # frame containing the settings to add an operator to the database
-    operator_form = ttk.Frame(database_tools_frame)
-    operator_form.grid(column=2, row=1, sticky="NSEW")
+    operator_form = ttkTools.frame_setup(database_tools_frame)
+    operator_form.grid(column=2, row=1, rowspan=2, sticky="NSEW")
     ttkTools.configure_grid(operator_form,
                             [
                                 [0, 150, None, None, 0]
@@ -393,7 +538,7 @@ def database_tools_widgets():
 
     # table of recruitable operators
     table_frame_1, scroll_canvas_1, operator_table = ttkTools.scrollbar_frame_setup(database_tools_frame,
-                                                                                    sticky_scrollframe="NEW",
+                                                                                    sticky_scrollframe="NSEW",
                                                                                     sticky_content="NSEW",
                                                                                     height=360, width=520)
     table_frame_1.grid(column=1, row=1)
@@ -444,7 +589,7 @@ def database_tools_widgets():
                 if c == 2:
                     table[r][c] = ttkTools.entry_setup(operator_table, width=25)
                 if c == 3:
-                    table[r][c] = ttkTools.entry_setup(operator_table, width=28)
+                    table[r][c] = ttkTools.entry_setup(operator_table, width=25)
                 table[r][c].grid(column=c, row=r)
                 table[r][c].insert(0, operator_list[r][c])
                 table[r][c].configure(state="readonly")
@@ -465,15 +610,15 @@ def database_tools_widgets():
                                 ]
         for i, rarity_row in enumerate(tag_combinations_txt):
             if i == 0:
-                table_frame_2.insert(tkinter.END, "rarity 3-4\n")
+                table_frame_2.insert("end", "rarity 3-4\n")
             else:
-                table_frame_2.insert(tkinter.END, "\nrarity")
-                table_frame_2.insert(tkinter.END, i+3)
-                table_frame_2.insert(tkinter.END, "\n")
+                table_frame_2.insert("end", "\nrarity")
+                table_frame_2.insert("end", i+3)
+                table_frame_2.insert("end", "\n")
             for combo_count_row in rarity_row:
                 for combo in combo_count_row:
-                    table_frame_2.insert(tkinter.END, ",".join(combo) + "|")
-                table_frame_2.insert(tkinter.END, "\n")
+                    table_frame_2.insert("end", ",".join(combo) + "|")
+                table_frame_2.insert("end", "\n")
         table_frame_2.configure(state="disabled")
     configure_tag_combinations_table()
     table_frame_2.grid_remove()
@@ -531,11 +676,37 @@ def database_tools_widgets():
         label1.pack(side="top", anchor="nw")
         label2 = ttkTools.label_setup(help_window, display_text=text2)
         label2.pack(side="top", anchor="nw")
+        label2.configure(wraplength=400)
     help_button = ttkTools.button_setup(button_display_frame, display_text="Help", function=lambda: open_help_window(), width=4)
     help_button.pack(side="top", anchor="nw")
-    version_label = ttkTools.label_setup(button_display_frame, display_text="ver. " + AutoRecruit_ver, font=("Courier", 8))
+
+    # version frame
+    version_frame = ttkTools.frame_setup(database_tools_frame)
+    version_frame.grid(column=0, row=2, columnspan=2, sticky="NSEW")
+    version_label = ttkTools.label_setup(version_frame, display_text="ver. " + AutoRecruit_ver, font=("Courier", 8))
     version_label.configure(foreground="grey")
     version_label.pack(side="bottom", anchor="sw")
+    def open_update_version_window():
+        version_window = tkinter.Toplevel(root)
+        version_window.title("Update recruitment version")
+        version_window.geometry("400x110")
+        version_textbox = tkinter.Text(version_window, width=20, height=2)
+        version_textbox.pack(side="top", anchor="nw")
+        version_textbox.insert("end", recruit_ver)
+        def update_version():
+            data[1] = version_textbox.get("1.0", "end")
+            with open("data.txt", "w") as data_file:
+                data_file.writelines(data)
+            update_data()
+            version_label.configure(text="ver. " + AutoRecruit_ver)
+        update_version_button = ttkTools.button_setup(version_window, display_text="Update recruitment version",
+                                                      function=lambda: [update_version(), version_window.destroy(), version_window.update()])
+        update_version_button.pack(side="top", anchor="nw")
+        cancel_button = ttkTools.button_setup(version_window, display_text="CANCEL", width="7",
+                                              function=lambda: [version_window.destroy(), version_window.update()])
+        cancel_button.pack(side="top", anchor="nw")
+    recruit_version_button = ttkTools.button_setup(version_frame, display_text="Update Version", function=lambda: open_update_version_window())
+    recruit_version_button.pack(side="bottom", anchor="sw")
 
 
 
@@ -544,23 +715,23 @@ def database_tools_widgets():
 
     def operator_form_widgets():
         # methods for implementing a default value in the name_entry widget
-        def name_entry_setup():
+        def name_entry_default():
             name_entry.configure(foreground="grey")
             name_entry.insert(0, "Operator Name")
-        def name_entry_FocusIn():
+        def name_entry_Focus(focus_type: str):
             name = nameVar.get()
-            if not name or name.lower() == "operator name":
-                name_entry.configure(foreground="black")
-                name_entry.delete(0, "end")
-        def name_entry_FocusOut():
-            name = nameVar.get()
-            if not name or name.lower() == "operator name":
-                name_entry.configure(foreground="grey")
-                name_entry.delete(0, "end")
-                name_entry.insert(0, "Operator Name")
-        name_entry_setup()
-        name_entry.bind("<FocusIn>", lambda e: name_entry_FocusIn())
-        name_entry.bind("<FocusOut>", lambda e: name_entry_FocusOut())
+            if focus_type.lower() == "in":
+                if name.lower() == "operator name":
+                    name_entry.configure(foreground="black")
+                    name_entry.delete(0, "end")
+            if focus_type.lower() == "out":
+                if not name or name.lower() == "operator name":
+                    name_entry.configure(foreground="grey")
+                    name_entry.delete(0, "end")
+                    name_entry.insert(0, "Operator Name")
+        name_entry_default()
+        name_entry.bind("<FocusIn>", lambda e: name_entry_Focus("in"))
+        name_entry.bind("<FocusOut>", lambda e: name_entry_Focus("out"))
         rarity_box = ttkTools.spinbox_setup(operator_form, 1, 6, saveTo_variable=rarityVar, width=4)
         rarity_box.grid(column=0, row=1, sticky="NW")
         # buttons to update the table
@@ -622,7 +793,7 @@ def database_tools_widgets():
                 tagsPos_lbox.selection_clear(0, "end")
                 tagsClass_lbox.selection_clear(0, "end")
                 tagsSpec_lbox.selection_clear(0, "end")
-                name_entry_setup()
+                name_entry_default()
                 configure_tables()
         add_operator_button = ttkTools.button_setup(operator_form, display_text="Add to Database", function=lambda: update_recruit_db("insert"))
         add_operator_button.grid(column=0, row=3, sticky="NW")
@@ -644,6 +815,7 @@ def database_tools_widgets():
     operator_form_widgets()
 
 home_frame_widgets()
+auto_recruit_widgets()
 database_tools_widgets()
 home_frame.grid()
 
