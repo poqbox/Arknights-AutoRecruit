@@ -345,8 +345,8 @@ def auto_recruit_widgets():
     # output textbox
     output_textbox = tk_scrolledtext.ScrolledText(auto_recruit_frame, height=18)
     output_textbox.grid(column=1, row=1, sticky="NEW")
-    text_font = font.nametofont(output_textbox.cget("font"))
-    output_textbox.tag_configure("indent", lmargin1=text_font.measure("    "), lmargin2=text_font.measure("    "))
+    output_text_font = font.nametofont(output_textbox.cget("font"))
+    output_textbox.tag_configure("indent", lmargin1=output_text_font.measure("    "), lmargin2=output_text_font.measure("    "))
     output_textbox.configure(state="disabled")
     def output_text(text):
         output_textbox.configure(state="normal")
@@ -366,21 +366,58 @@ def auto_recruit_widgets():
                                                                        output_text("\n")])
     get_window_titles_button.pack(side="top", anchor="nw")
     def open_help_window():
-        help_window = tkinter.Toplevel(root)
+        help_window = tkinter.Toplevel(root, background="white")
         help_window.title("Instructions")
-        help_window.geometry("400x300")
-        text1 = "Using AutoRecruit"
-        text2 = "To get the emulator's path, right click on the application and select [Copy as path].\n" \
-                "To get the emulator's window title, try using [Get opened window titles] button.\n" \
+        help_window.geometry("600x400")
+        # Text for [Using AutoRecruit]
+        label1 = ttkTools.label_setup(help_window, display_text="Using AutoRecruit", font=("Helvetica", 12, "bold"), background="white")
+        label1.pack(side="top", anchor="nw", fill="x")
+        help_textbox1 = tkinter.Text(help_window, wrap="word", relief="flat", height=6)
+        help_textbox1.pack(side="top", anchor="nw", fill="x")
+        help_text_font1 = font.nametofont(help_textbox1.cget("font"))
+        text1 = "To get the emulator's path, right click on the application and select [Copy as path].\n" \
+                "To get the emulator's window title, try using the [Get opened window titles] button.\n" \
                 "This button will output a list of presently open window titles, separated by curly brackets. " \
                 "If the emulator is open, it's title will appear in the output box.\n" \
-                "If the emulator is open, it's window title will appear in the output box.\n" \
-                "If matching tags are found, AutoRecruit will recruit with no tags selected at the specified recruit time."
-        label1 = ttkTools.label_setup(help_window, display_text=text1, font=("Helvetica", 12, "bold"))
-        label1.pack(side="top", anchor="nw")
-        label2 = ttkTools.label_setup(help_window, display_text=text2)
-        label2.pack(side="top", anchor="nw")
-        label2.configure(wraplength=400)
+                "If the emulator is open, it's window title will appear in the output box.\n"
+        help_textbox1.insert("end", text1)
+        help_textbox1.configure(font=("Segoe UI", 9))
+        help_textbox1.configure(state="disabled")
+        # Text for [Setup]
+        label2 = ttkTools.label_setup(help_window, display_text="Setup", font=("Helvetica", 12, "bold"), background="white")
+        label2.pack(side="top", anchor="nw", fill="x")
+        help_textbox2 = tkinter.Text(help_window, wrap="word", relief="flat", height=10)
+        help_textbox2.pack(side="top", anchor="nw", fill="x")
+        help_text_font2 = font.nametofont(help_textbox2.cget("font"))
+        help_textbox2.tag_configure("indent", lmargin1=help_text_font2.measure("  "), lmargin2=help_text_font2.measure("  "))
+        text2_1h = "[Recruitment permits]\n"
+        text2_1p = "The number of recruitment permits to be used by AutoRecruit.\n"
+        text2_2h = "[Priority Tags]\n"
+        text2_2p = "Determines the tag combinations that AutoRecruit will prioritize (top-to-bottom).\n" \
+                   "Drag and drop to reorder the list, use the swap button to add/remove priorities."\
+                   "If no matching tags are found, AutoRecruit will recruit with no tags selected at the specified recruit time.\n"
+        text2_3h = "[Expedited Plans]\n"
+        text2_3p = "If checked, AutoRecruit will use expedited plans.\n"
+        text2_4h = "[Save]\n"
+        text2_4p = "Saves the current configuration.\n"
+        text2_5h = "[Start]\n"
+        text2_5p = "Starts AutoRecruit. It will continue to run until the specified number of recruitment permits have been used.\n"
+        text2_6h = "[Force Stop]\n"
+        text2_6p = "Stops AutoRecruit from running any further. Closing the application will also stop AutoRecruit."
+        help_textbox2.insert("end", text2_1h)
+        help_textbox2.insert("end", text2_1p, "indent")
+        help_textbox2.insert("end", text2_2h)
+        help_textbox2.insert("end", text2_2p, "indent")
+        help_textbox2.insert("end", text2_3h)
+        help_textbox2.insert("end", text2_3p, "indent")
+        help_textbox2.insert("end", text2_4h)
+        help_textbox2.insert("end", text2_4p, "indent")
+        help_textbox2.insert("end", text2_5h)
+        help_textbox2.insert("end", text2_5p, "indent")
+        help_textbox2.insert("end", text2_6h)
+        help_textbox2.insert("end", text2_6p, "indent")
+        help_textbox2.configure(font=("Segoe UI", 9))
+        help_textbox2.configure(state="disabled")
     help_button = ttkTools.button_setup(button_display_frame, display_text="Help", function=lambda: open_help_window(), width=4)
     help_button.pack(side="top", anchor="nw")
 
@@ -405,17 +442,28 @@ def auto_recruit_widgets():
     # frame containing the setup for AutoRecruit
     settings_frame = ttkTools.frame_setup(auto_recruit_frame)
     settings_frame.grid(column=2, row=1, sticky="NSEW")
+    use_expedited_plans_Var = tkinter.BooleanVar()
     emulator_path_entry = ttkTools.entry_setup(settings_frame, width=32)
     emulator_path_entry.pack(side="top", anchor="nw")
+    emulator_path_entry.insert(0, emulator_path)
     emulator_title_entry = ttkTools.entry_setup(settings_frame, width=32)
     emulator_title_entry.pack(side="top", anchor="nw")
+    emulator_title_entry.insert(0, emulator_title)
+    # frame for recruitment_permits widgets --start--
+    recruitment_permits_frame = ttkTools.frame_setup(settings_frame)
+    recruitment_permits_frame.pack(side="top", anchor="nw")
+    recruitment_permits_label = ttkTools.label_setup(recruitment_permits_frame, display_text="Recruitment Permits:", alignment="left", width=20)
+    recruitment_permits_label.pack(side="left", anchor="nw")
+    recruitment_permits_entry = ttkTools.entry_setup(recruitment_permits_frame, width=6)
+    recruitment_permits_entry.pack(side="left", anchor="nw")
+    # frame for recruitment_permits widgets --end--
 
     # listbox for ordering tag priorities
-    priority_label = ttkTools.label_setup(settings_frame, display_text="Priority (top-to-bottom)")
+    priority_label = ttkTools.label_setup(settings_frame, display_text="Priority Tags")
     priority_label.pack(side="top", anchor="nw")
     priority_listbox = ttkTools.dragdrop_listbox_setup(
         settings_frame,
-        list_variable=tkinter.StringVar(value=["6-star", "5-star", "4-star", "Distinctions"]),
+        list_variable=tkinter.StringVar(value=["6-star", "5-star", "4-star", "3-star", "2-star", "1-star"]),
         backdrop="ridge",
         height=6,
         width=14
@@ -424,23 +472,28 @@ def auto_recruit_widgets():
 
     recruitment_time_spinbox = ttkTools.spinbox_setup(settings_frame, values=recruitment_time_values(), width=8, state="readonly")
     recruitment_time_spinbox.pack(side="top", anchor="nw")
-    recruitment_time_spinbox.set("01:00")
-    expedited_plans_checkbox = ttkTools.checkbox_setup(settings_frame, display_text="Use expedited plans", saveValueTo_variable=None)
-    expedited_plans_checkbox.pack(side="top", anchor="nw")
-    def update_path_and_title():
-        data[2] = emulator_path_entry.get()
-        data[3] = emulator_title_entry_entry.get()
+    recruitment_time_spinbox.set(data[4][:-1])
+    expedited_plans_checkbutton = ttkTools.checkbutton_setup(settings_frame, display_text="Use expedited plans",
+                                                             saveValueTo_variable=use_expedited_plans_Var)
+    expedited_plans_checkbutton.pack(side="top", anchor="nw")
+    if data[5][:-1] == "True":
+        use_expedited_plans_Var.set(True)
+    def update_data_file():
+        data[2] = emulator_path_entry.get() + "\n"
+        data[3] = emulator_title_entry.get() + "\n"
+        data[4] = recruitment_time_spinbox.get() + "\n"
+        data[5] = str(use_expedited_plans_Var.get()) + "\n"
         with open("data.txt", "w") as data_file:
             data_file.writelines(data)
         update_data()
-    save_button = ttkTools.button_setup(settings_frame, display_text="Save", function=lambda: update_path_and_title())
+    save_button = ttkTools.button_setup(settings_frame, display_text="Save", function=lambda: update_data_file())
     save_button.pack(side="top", anchor="nw")
     # screen_capture_checkbox = ttkTools.checkbox_setup(settings_frame, display_text="Show screen capture", saveValueTo_variable=None)
     # screen_capture_checkbox.pack(side="top", anchor="nw")
     start_button = ttkTools.button_setup(settings_frame, display_text="Start", function=lambda: start_AutoRecruit())
     start_button.pack(side="top", anchor="nw")
-    emulator_path_entry.insert(0, emulator_path)
-    emulator_title_entry.insert(0, emulator_title)
+    stop_button = ttkTools.button_setup(settings_frame, display_text="Force Stop", function=None)
+    stop_button.pack(side="top", anchor="nw")
 
     # settings frame setup --end--
 
