@@ -4,9 +4,24 @@ import os
 import pytesseract
 import time
 import pyautogui
-import pygetwindow
 import win32gui
 from pynput.keyboard import Key, Listener
+
+
+# Uses pytesseract to recognize text in images
+# Uses pyautogui to take screenshots
+# Uses win32gui (from pywin32) to get window details
+
+
+def get_window_titles():
+    """Returns a list of visible window titles"""
+    def callback(win_handle, win_titles_list):
+        if win32gui.IsWindowVisible(win_handle):
+            window_title = win32gui.GetWindowText(win_handle)
+            win_titles_list.append(window_title)
+    win_titles_list = []
+    win32gui.EnumWindows(callback, win_titles_list)
+    return win_titles_list
 
 
 class Tools:
@@ -21,24 +36,23 @@ class Tools:
         self.file_dir = os.path.dirname(__file__)
         self.file_dir = os.path.dirname(self.file_dir)
 
-    def open_image_file(self, path):
-        return cv2.imread(path, 0)
-
     def get_window_titles(self):
-        return pygetwindow.getAllTitles()
+        """Returns a list of visible window titles"""
+        def callback(win_handle, win_titles_list):
+            if win32gui.IsWindowVisible(win_handle):
+                window_title = win32gui.GetWindowText(win_handle)
+                win_titles_list.append(window_title)
+
+        win_titles_list = []
+        win32gui.EnumWindows(callback, win_titles_list)
+        return win_titles_list
 
     def get_window_handle(self):
+        """Returns the window's handle"""
         return self.window_handle
 
-    def print_window_titles(self):
-        titles = self.get_window_titles()
-        print("Open Windows:")
-        for title in titles:
-            if title != "":
-                print("    " + title)
-
     def show_screen(self):
-        # prepare screen for screen capture
+        # preview screenshot area
         cv2.namedWindow(self.screen_cap_name, cv2.WINDOW_NORMAL)
         cv2.resizeWindow(self.screen_cap_name, self.width, self.height)
         while True:
@@ -48,7 +62,7 @@ class Tools:
             cv2.waitKey(1)
 
     def show_window(self, print_position=False):
-        # prepare window for screen capture
+        # preview screenshot area
         # window cannot be brought to foreground if it is minimized
         #   un-minimize the window before running
         # crashes if the capture window is brought in front of the input window
@@ -65,6 +79,7 @@ class Tools:
             cv2.waitKey(1)
 
     def get_window_position(self, print_position=False):
+        """Returns the top-left and bottom-right points of the window"""
         x1, y1, x2, y2 = win32gui.GetWindowRect(self.window_handle)
         pt1 = x1, y1
         pt2 = x2, y2
@@ -73,7 +88,7 @@ class Tools:
         return pt1, pt2
 
     def draw_screenshot_area(self):
-        # prepare window for screen capture
+        # preview screenshot area
         cv2.namedWindow(self.screen_cap_name, cv2.WINDOW_NORMAL)
         cv2.resizeWindow(self.screen_cap_name, self.width, self.height)
         while True:
@@ -85,7 +100,7 @@ class Tools:
             cv2.waitKey(1)
 
     def draw_rectangle_on_screen(self, pt1, pt2):
-        # prepare window for screen capture
+        # preview screenshot area
         cv2.namedWindow(self.screen_cap_name, cv2.WINDOW_NORMAL)
         cv2.resizeWindow(self.screen_cap_name, self.width, self.height)
         while True:
@@ -113,19 +128,23 @@ class Tools:
                 print("Please delete some")
                 return
 
+    def open_image_file(self, path):
+        return cv2.imread(path, 0)
+
     def save_image(self, image, directory="Screenshots", file_name="image", file_type=".png"):
         # setup path
         path = os.path.join(self.file_dir, directory, file_name)
         self.account_for_duplicate_name(image, path, file_type)
 
     def take_screenshot(self, save_screenshot=True, screenshot_dir="Screenshots", screenshot_name="screenshot"):
+        """Takes a screenshot of the entire screen"""
         img = pyautogui.screenshot()
         if save_screenshot:
             self.save_image(img, screenshot_dir, screenshot_name, file_type=".png")
         return img
 
     def take_windowed_screenshot(self, save_screenshot=True, screenshot_dir="Screenshots", screenshot_name="screenshot"):
-        # take a screenshot of the window
+        """Takes a screenshot of the window"""
         win32gui.SetForegroundWindow(self.window_handle)
         img = pyautogui.screenshot()
         pt1, pt2 = self.get_window_position()
@@ -135,6 +154,7 @@ class Tools:
         return img
 
     def take_bounded_screenshot(self, pt1, pt2, save_screenshot=True, screenshot_dir="Screenshots", screenshot_name="screenshot"):
+        """Takes a screenshot of the bounded area"""
         # pt1 is top-left
         # pt2 is bottom-right
         img = pyautogui.screenshot()
@@ -166,13 +186,13 @@ class Tools:
         if not bound_text:
             return pytesseract.image_to_string(img), image
         else:
-            # Perform OTSU threshold
+            # perform OTSU threshold
             ret, thresh1 = cv2.threshold(img, 0, 255, cv2.THRESH_OTSU | cv2.THRESH_BINARY_INV)
-            # Specify structure shape and kernel size.
+            # specify structure shape and kernel size
             rect_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (18, 18))
-            # Applying dilation
+            # apply dilation
             dilation = cv2.dilate(thresh1, rect_kernel, iterations=1)
-            # Finding contours
+            # find contours
             contours, hierarchy = cv2.findContours(dilation, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
             # extract text in identified contours
