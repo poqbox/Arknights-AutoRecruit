@@ -101,7 +101,7 @@ def button_setup(parent, display_text: str=None, function=None, width=None, text
     return button
 
 
-def checkbox_setup(parent, display_text: str=None, saveValueTo_variable=None, value_when_checked=1, value_when_unchecked=0, width=None, state=None):
+def checkbutton_setup(parent, display_text: str=None, saveValueTo_variable=None, value_when_checked=1, value_when_unchecked=0, width=None, state=None):
     """
     Use tkinter type variables when using saveValueTo_variable, such as tkinter.StringVar(), and use .get() to retrieve the value
     """
@@ -145,10 +145,23 @@ def entry_setup(parent, saveTo_variable: tkinter.StringVar=None, font=None, widt
     return entry
 
 
-def label_setup(parent, display_text: str=None, font=None, width=None, background=None, text_padding=None, state=None):
+def label_setup(parent, display_text: str=None, font=None, alignment=None, width=None, background=None, text_padding=None, state=None):
+    anchor = "w"
+    justify = "left"
+    if alignment == "left":
+        anchor = "w"
+        justify = "left"
+    if alignment == "center":
+        anchor = "center"
+        justify = "center"
+    if alignment == "right":
+        anchor = "e"
+        justify = "right"
     label = ttk.Label(parent,
                       text=display_text,
                       font=font,
+                      anchor=anchor,
+                      justify=justify,
                       width=width,
                       background=background,
                       padding=text_padding,
