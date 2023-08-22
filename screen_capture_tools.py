@@ -37,7 +37,9 @@ class Tools:
         self.file_dir = os.path.dirname(self.file_dir)
 
     def get_window_titles(self):
-        """Returns a list of visible window titles"""
+        """
+        Returns a list of visible window titles
+        """
         def callback(win_handle, win_titles_list):
             if win32gui.IsWindowVisible(win_handle):
                 window_title = win32gui.GetWindowText(win_handle)
@@ -48,11 +50,16 @@ class Tools:
         return win_titles_list
 
     def get_window_handle(self):
-        """Returns the window's handle"""
+        """
+        Returns the window's handle
+        """
         return self.window_handle
 
     def show_screen(self):
-        # preview screenshot area
+        """
+        Show the screen in a feed\n
+        Enter a keyboard input to exit the feed and the program
+        """
         cv2.namedWindow(self.screen_cap_name, cv2.WINDOW_NORMAL)
         cv2.resizeWindow(self.screen_cap_name, self.width, self.height)
         while True:
@@ -62,11 +69,15 @@ class Tools:
             cv2.waitKey(1)
 
     def show_window(self, print_position=False):
-        # preview screenshot area
-        # window cannot be brought to foreground if it is minimized
-        #   un-minimize the window before running
-        # crashes if the capture window is brought in front of the input window
-        #   try dragging or repositioning the capture window
+        """
+        Preview the window for taking screenshots of it\n
+        Enter a keyboard input to exit the feed and the program\n
+        Notes:\n
+        Issue: The window cannot be brought to foreground if it is minimized\n
+        Fix: un-minimize the window before running\n
+        Issue: The program crashes if the capture window is brought in front of the input window\n
+        Fix: Try dragging or repositioning the capture window ahead of time
+        """
         cv2.namedWindow(self.window_cap_name, cv2.WINDOW_NORMAL)
         cv2.resizeWindow(self.window_cap_name, self.width, self.height)
         while True:
@@ -79,7 +90,9 @@ class Tools:
             cv2.waitKey(1)
 
     def get_window_position(self, print_position=False):
-        """Returns the top-left and bottom-right points of the window"""
+        """
+        Returns the top-left and bottom-right points of the window
+        """
         x1, y1, x2, y2 = win32gui.GetWindowRect(self.window_handle)
         pt1 = x1, y1
         pt2 = x2, y2
@@ -87,31 +100,24 @@ class Tools:
             print(pt1, pt2)
         return pt1, pt2
 
-    def draw_screenshot_area(self):
-        # preview screenshot area
-        cv2.namedWindow(self.screen_cap_name, cv2.WINDOW_NORMAL)
-        cv2.resizeWindow(self.screen_cap_name, self.width, self.height)
-        while True:
-            image = pyautogui.screenshot()
-            pt1, pt2 = self.get_window_position()
-            image = np.asarray(image)
-            image = cv2.rectangle(image, pt1, pt2, (0, 0, 255), 2)
-            cv2.imshow(self.screen_cap_name, image)
-            cv2.waitKey(1)
-
-    def draw_rectangle_on_screen(self, pt1, pt2):
-        # preview screenshot area
+    def draw_rectangle_on_screen(self, pt1, pt2, border_thickness=2):
+        """
+        Preview the screen with a rectangle from pt1 to pt2\n
+        Enter a keyboard input to exit the feed and the program
+        """
         cv2.namedWindow(self.screen_cap_name, cv2.WINDOW_NORMAL)
         cv2.resizeWindow(self.screen_cap_name, self.width, self.height)
         while True:
             image = pyautogui.screenshot()
             image = np.asarray(image)
-            image = cv2.rectangle(image, pt1, pt2, (0, 0, 255), 2)
+            image = cv2.rectangle(image, pt1, pt2, (0, 0, 255), border_thickness)
             cv2.imshow(self.screen_cap_name, image)
             cv2.waitKey(1)
 
     def account_for_duplicate_name(self, image, path, file_type):
-        # account for images of the same name
+        """
+        Accounts for saving images of the same name
+        """
         path_temp = path
         path = path + file_type
         if not os.path.exists(path):
@@ -137,14 +143,18 @@ class Tools:
         self.account_for_duplicate_name(image, path, file_type)
 
     def take_screenshot(self, save_screenshot=True, screenshot_dir="Screenshots", screenshot_name="screenshot"):
-        """Takes a screenshot of the entire screen"""
+        """
+        Takes a screenshot of the entire screen
+        """
         img = pyautogui.screenshot()
         if save_screenshot:
             self.save_image(img, screenshot_dir, screenshot_name, file_type=".png")
         return img
 
     def take_windowed_screenshot(self, save_screenshot=True, screenshot_dir="Screenshots", screenshot_name="screenshot"):
-        """Takes a screenshot of the window"""
+        """
+        Takes a screenshot of the window
+        """
         win32gui.SetForegroundWindow(self.window_handle)
         img = pyautogui.screenshot()
         pt1, pt2 = self.get_window_position()
@@ -154,7 +164,9 @@ class Tools:
         return img
 
     def take_bounded_screenshot(self, pt1, pt2, save_screenshot=True, screenshot_dir="Screenshots", screenshot_name="screenshot"):
-        """Takes a screenshot of the bounded area"""
+        """
+        Takes a screenshot of the bounded area
+        """
         # pt1 is top-left
         # pt2 is bottom-right
         img = pyautogui.screenshot()
@@ -164,8 +176,10 @@ class Tools:
         return img
 
     def skew_image(self, image, image_pts, output_pts, save_image=False, folder_dir="Screenshots", file_name="deskewed", file_type=".png"):
-        # image_pts are three corner points
-        # output_pts is the desired position after the transformation
+        """
+        image_pts are three corner points\n
+        output_pts are the desired position after the transformation
+        """
         img = np.asarray(image)
         rows, cols, ch = img.shape
         pts1 = np.float32(image_pts)
@@ -179,6 +193,9 @@ class Tools:
         return img_skewed
 
     def detect_text_in_image(self, image, bound_text=False, color_to_gray=False):
+        """
+        Returns the detected text and the image in a tuple
+        """
         # convert image to numpy array
         img = np.asarray(image)
         if color_to_gray:
@@ -205,7 +222,9 @@ class Tools:
             return detected_text, image
 
     def find_text_in_image(self, image, find_text, print_detected_text=False, show_image=False, bound_text=False):
-        # enter a keyboard input to exit the image and program
+        """
+        Enter a keyboard input to exit the feed and the program
+        """
         detected_text, img = self.detect_text_in_image(image, bound_text)
         if print_detected_text:
             print("Detected Text:")
@@ -225,7 +244,9 @@ class Tools:
         return text_found
 
     def find_text_in_window(self, find_text, bound=None, print_detected_text=False, show_window=True, bound_text=False, quick=False):
-        # when quick==True, runs once and returns
+        """
+        When quick==True, runs once and returns
+        """
         while True:
             was_text_found = False
             # get image of the window
@@ -263,11 +284,13 @@ class Tools:
                     print("--------------------------------")
                 return text_found
 
-    def find_points_on_image(self, image_name=None, directory="Screenshots"):
-        # if image_name=None, takes and uses a screenshot of the window as the image
-        # shows an image and returns three mouse click positions
-        # (0, 0) is the image's top-left pixel
-        # default directory is the "Screenshots" folder
+    def find_points_on_image(self, image_name=None, directory="Screenshots", quit_key="q", reset_key="r"):
+        """
+        If image_name=None, takes and uses a screenshot of the window as the image\n
+        Shows an image and returns three mouse click positions\n
+        (0, 0) is the image's top-left pixel\n
+        Default directory is the "Screenshots" folder
+        """
         def mouse_click_event(event, x, y, flags, params):
             if event == cv2.EVENT_LBUTTONDOWN:
                 if len(pts_list) >= num_pts:
@@ -298,12 +321,12 @@ class Tools:
             cv2.imshow("Image", img)
             cv2.setMouseCallback("Image", mouse_click_event)
             # reset image and points list
-            if cv2.waitKey(1) & 0xFF == ord("r"):
+            if cv2.waitKey(1) & 0xFF == ord(reset_key):
                 if image_name is None:
                     img = take_screenshot()
                 else:
                     img = cv2.imread(image_path)
                 pts_list.clear()
             # exit program with "q"
-            if cv2.waitKey(1) & 0xFF == ord("q"):
+            if cv2.waitKey(1) & 0xFF == ord(quit_key):
                 break
