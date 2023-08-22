@@ -1,0 +1,9 @@
+1.0.0
+Il Siracusano
+C:\Program Files\Google\Play Games\Bootstrapper.exe
+Google Play Games beta
+10
+01:00
+True
+False
+6-star|5-star|4-star
