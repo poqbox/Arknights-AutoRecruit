@@ -18,6 +18,21 @@ import recruitment_database_tools as recruitTools
 #   --psm N
 # binding events in tkinter info: https://stackoverflow.com/questions/7299955/tkinter-binding-a-function-with-arguments-to-a-widget
 
+
+data = []
+with open("data.txt", "r") as data_file:
+    data = data_file.readlines()
+# application version
+overall_ver = data[0][:-1]
+# recruitment database version
+recruit_ver = data[1][:-1]
+# path to Google Play Games
+emulator_path = data[2][:-1]
+# window title of Google Play Games
+emulator_title = data[3][:-1]
+AutoRecruit_ver = overall_ver + ".[" + recruit_ver + "]"
+
+
 def update_data():
     global overall_ver
     global recruit_ver
@@ -29,18 +44,12 @@ def update_data():
     with open("data.txt", "r") as data_file:
         data = data_file.readlines()
 
-    # overall_ver = "1.0.0"
-    # recruit_ver = "Il Siracusano"
     overall_ver = data[0][:-1]
     recruit_ver = data[1][:-1]
     AutoRecruit_ver = overall_ver + ".[" + recruit_ver + "]"
-
     # path to Google Play Games
-    # emulator_title = "Google Play Games beta"
-    # emulator_path = r'C:\Program Files\Google\Play Games\Bootstrapper.exe'
     emulator_path = data[2][:-1]
     emulator_title = data[3][:-1]
-update_data()
 
 # ------------------------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------------------------
@@ -51,6 +60,30 @@ update_data()
 # Recruitment label position:   (1395, 645), (1395, 701), (1625, 715)
 # Recruit button position:      (1389, 701), (1388, 811), (1628, 830)
 # Start button:                 (799, 712),               (1106, 814)
+#
+# Recruit box 1:                (26, 273),   (26, 644),   (943, 644)
+# Recruit box 2:                (973, 273),  (973, 644),  (1890, 644)
+# Recruit box 3:                (26, 689),   (26, 1060),  (943, 1060)
+# Recruit box 4:                (973, 689),  (973, 1060), (1890, 1060)
+# Recruitment permits count:    (1248, 37),  (1248, 79),  (1338, 79)
+#
+# tested in recruit box 1       top_left     bot_left     bot_right
+# Recruitment time (hours):     (632, 299),  (632, 388),  (742, 388)
+# Recruitment time (minutes):   (878, 299),  (878, 388),  (988, 388)
+# Recruitment time (seconds):   (1121, 299), (1121, 388), (1231, 388)
+# Hour up button:               (570, 189),  (570, 260),  (787, 260)
+# Hour down button:             (817, 190),  (817, 260),  (1034, 260)
+# Minute up button:             (567, 409),  (567, 481),  (782, 481)
+# Minute down button:           (812, 409),  (812, 481),  (1030, 481)
+# Recruitment tag 1:            (563, 540),  (563, 608),  (778, 608)
+# Recruitment tag 2:            (813, 540),  (813, 608),  (1028, 608)
+# Recruitment tag 3:            (1063, 540), (1063, 608), (1278, 608)
+# Recruitment tag 4:            (563, 648),  (563, 716),  (778, 716)
+# Recruitment tag 5:            (813, 648),  (813, 716),  (1028, 716)
+# Refresh count:                (1289, 108), (1289, 142), (1413, 142)
+# Refresh button:               (1405, 560), (1404, 657), (1502, 657)
+# Confirm button:               (1331, 834), (1331, 908), (1604, 908)
+# Cancel button:                (1331, 932), (1331, 1006),(1604, 1006)
 #
 # ------------------------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------------------------
@@ -92,16 +125,16 @@ update_data()
 #
 # ------------------------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------------------------
-# list of operators and their tag combination
-# sort by rarity
-#   1.  ignore class type
-#   2.  if tag could be 6*, 5*, 4*, search tag combinations
-#   3.  if no tag combination gives 6*, 5*, 4*, try next tag
-#   4.  if no 6*, 5*, 4*, reshuffle and repeat
-#   5.  if no 6*, 5*, 4*, search with lowest time and no tags
+# Special recruitment rules:
+#   - all 6-stars share the [Top Operator] tag (last checked: Il Siracusano event)
+#   - all 5-stars share the [Senior Operator] tag (last checked: Il Siracusano event)
+#   - all 2-stars share the [Starter] tag (last checked: Il Siracusano event)
+#   - all 1-stars share the [Robot] tag (last checked: Il Siracusano event)
+#   - 1-stars can be obtained without a [Robot] tag
+#   - 6-stars can only be obtained with a [Top Operator] tag
 
 
-def launch_from_GooglePlayGames():
+def launch_from_GooglePlayGames(emulator_path, emulator_title):
     # open emulator and bring to foreground
     subprocess.run(emulator_path)
     emu_hdl = win32gui.FindWindow(None, emulator_title)
@@ -138,7 +171,7 @@ def launch_from_GooglePlayGames():
     # y-distance stays the same regardless of window size
     min_search_pt = (350, 230)
     max_search_pt = (590, 260)
-    search_w = 110
+    search_w = 240
     desktop.move_mouse(pt1[0] + min_search_pt[0], pt1[1] + min_search_pt[1])
     loading_box_bound = ((scr_mdpt[0] - 500), (scr_mdpt[1] - 300)), ((scr_mdpt[0] + 500), (scr_mdpt[1] + 300))
     for i in range(min_search_pt[0], max_search_pt[0] + 1 - search_w):
@@ -154,11 +187,11 @@ def launch_from_GooglePlayGames():
     return False
 
 
-def start_AutoRecruit():
-    launched_Arknights = launch_from_GooglePlayGames()
+def start_AutoRecruit(emulator_path: str, emulator_title: str, recruit_num: int=0, recruit_time: str="00:00", use_expedited_plans=False, prepare_recruitment=False, priority_tags=[]):
+    launched_Arknights = launch_from_GooglePlayGames(emulator_path, emulator_title)
     if launched_Arknights:
-        Arknights = screen_capture_tools.Tools("Arknights")
         time.sleep(10)
+        Arknights = screen_capture_tools.Tools("Arknights")
         desktop.left_click(scr_mdpt[0], scr_mdpt[1])
         time.sleep(5)
         entered_Arknights_home_page = False
@@ -176,12 +209,8 @@ def start_AutoRecruit():
             # take screenshot of recruitment label and deskew it
             img = Arknights.take_bounded_screenshot((1395, 645), (1625, 715), save_screenshot=False)
             img = Arknights.skew_image(img, ((0, 0), (0, 55), (230, 70)), ((0, 0), (0, 55), (235, 55)), save_image=False)
-            # if Arknights.find_text_in_image(img, "Recruit"):
-                # choose recruitment slot
-
-                # get tags and find the best combination
-
-
+            if Arknights.find_text_in_image(img, "Recruitment"):
+                desktop.left_click(1509, 755)
         else:
             print("Failed to enter Arknights' home page")
     else:
@@ -238,7 +267,7 @@ tagsClass_dict = {
     "VAN": "Vanguard"
 }
 tagsSpec_dict = {
-    "AOE": "AOE",
+    "AOE": "AoE",
     "CDC": "Crowd Control",
     "DBF": "Debuff",
     "DFS": "Defense",
@@ -425,24 +454,26 @@ def auto_recruit_widgets():
 
 
     # settings frame setup --start--
-
-    def recruitment_time_values():
-        times = []
-        for hours in range(1, 10):
-            if hours < 10:
-                hours = f"0{hours}"
-            for minutes in range(0, 60, 10):
-                if minutes < 10:
-                    minutes = f"0{minutes}"
-                times.append(f"{hours}:{minutes}")
-                if hours == f"09":
-                    break
-        return times
-
     # frame containing the setup for AutoRecruit
     settings_frame = ttkTools.frame_setup(auto_recruit_frame)
     settings_frame.grid(column=2, row=1, sticky="NSEW")
     use_expedited_plans_Var = tkinter.BooleanVar()
+    prep_recruitments_Var = tkinter.BooleanVar()
+    operators_list = recruit_tools.get_operator_data(get=["name"], sort_order=[["name", "asc"]], reduce_nested_lists=True)
+    priority_list = data[8][:-1].split("|")
+    priority_extras_list = ["6-star", "5-star", "4-star"]
+    priority_extras_list.extend(operators_list)
+    priority_extras_list = [item for item in priority_extras_list if not item in priority_list]
+    recruitment_times_list = []
+    for hours in range(1, 10):
+        if hours < 10:
+            hours = f"0{hours}"
+        for minutes in range(0, 60, 10):
+            if minutes < 10:
+                minutes = f"0{minutes}"
+            recruitment_times_list.append(f"{hours}:{minutes}")
+            if hours == f"09":
+                break
     emulator_path_entry = ttkTools.entry_setup(settings_frame, width=32)
     emulator_path_entry.pack(side="top", anchor="nw")
     emulator_path_entry.insert(0, emulator_path)
@@ -456,41 +487,135 @@ def auto_recruit_widgets():
     recruitment_permits_label.pack(side="left", anchor="nw")
     recruitment_permits_entry = ttkTools.entry_setup(recruitment_permits_frame, width=6)
     recruitment_permits_entry.pack(side="left", anchor="nw")
+    recruitment_permits_entry.insert(0, data[4][:-1])
     # frame for recruitment_permits widgets --end--
 
-    # listbox for ordering tag priorities
-    priority_label = ttkTools.label_setup(settings_frame, display_text="Priority Tags")
-    priority_label.pack(side="top", anchor="nw")
+
+    # frame for ordering tag priorities --start--
+    priority_tags_frame = ttkTools.frame_setup(settings_frame)
+    priority_tags_frame.pack(side="top", anchor="nw")
+    ttkTools.configure_grid(priority_tags_frame,
+                  [
+                      [0, None, None, None, None],
+                      [1, None, None, None, None],
+                      [2, None, None, None, None],
+                      [3, None, None, None, None],
+                      [4, None, None, None, None]
+                  ],
+                  [
+                      [0, None, None, None, None],
+                      [1, None, None, None, None]
+                  ]
+                  )
+    priority_label = ttkTools.label_setup(priority_tags_frame, display_text="Priority Tags")
+    priority_label.grid(column=0, row=0, columnspan=3, sticky="NW")
     priority_listbox = ttkTools.dragdrop_listbox_setup(
-        settings_frame,
-        list_variable=tkinter.StringVar(value=["6-star", "5-star", "4-star", "3-star", "2-star", "1-star"]),
+        priority_tags_frame,
+        list_variable=tkinter.StringVar(value=priority_list),
+        select_mode="multiple",
+        stay_selected_when_unfocused=True,
         backdrop="ridge",
         height=6,
         width=14
     )
-    priority_listbox.pack(side="top", anchor="nw")
+    priority_listbox.grid(column=0, row=1, rowspan=4)
+    priority_extras_listbox = ttkTools.listbox_setup(
+        priority_tags_frame,
+        list_variable=tkinter.StringVar(value=priority_extras_list),
+        select_mode="multiple",
+        stay_selected_when_unfocused=True,
+        backdrop="ridge",
+        height=6,
+        width=14
+    )
+    priority_extras_listbox.grid(column=2, row=1, rowspan=4)
+    def add_remove_priority():
+        selected_list = []
+        while priority_listbox.curselection():
+            i = priority_listbox.curselection()[0]
+            selected_list.insert(0, priority_listbox.get(i))
+            priority_listbox.delete(i)
+        for item in selected_list:
+            if item in operators_list:
+                listbox_list = priority_extras_listbox.get(0, "end")
+                i = operators_list.index(item)
+                # if i == 0:
+                #     i += 1
+                #     next_operator = operators_list[i]
+                #     while next_operator not in listbox_list:
+                #         i += 1
+                #         next_operator = operators_list[i]
+                #     i = listbox_list.index(next_operator)
+                # check below
+                prev_operator = operators_list[i]
+                while i > 0 and prev_operator not in listbox_list:
+                    i -= 1
+                    prev_operator = operators_list[i]
+                # if none below, check above
+                if i == 0:
+                    i = operators_list.index(item)
+                    i += 1
+                    next_operator = operators_list[i]
+                    while next_operator not in listbox_list:
+                        i += 1
+                        next_operator = operators_list[i]
+                    i = listbox_list.index(next_operator)
+                else:
+                    i = listbox_list.index(prev_operator) + 1
+                priority_extras_listbox.insert(i, item)
+            else:
+                priority_extras_listbox.insert(0, item)
+        selected_list = []
+        while priority_extras_listbox.curselection():
+            i = priority_extras_listbox.curselection()[0]
+            selected_list.insert(0, priority_extras_listbox.get(i))
+            priority_extras_listbox.delete(i)
+        for item in selected_list:
+            priority_listbox.insert(0, item)
+    def clear_selection():
+        priority_listbox.selection_clear(0, "end")
+        priority_extras_listbox.selection_clear(0, "end")
+    add_remove_priority_button = ttkTools.button_setup(priority_tags_frame, display_text="<->", width=4, function=lambda: add_remove_priority())
+    add_remove_priority_button.grid(column=1, row=2)
+    clear_selection_button = ttkTools.button_setup(priority_tags_frame, display_text="Clr", width=4, function=lambda: clear_selection())
+    clear_selection_button.grid(column=1, row=3)
+    # frame for ordering tag priorities --end--
 
-    recruitment_time_spinbox = ttkTools.spinbox_setup(settings_frame, values=recruitment_time_values(), width=8, state="readonly")
+
+    recruitment_time_spinbox = ttkTools.spinbox_setup(settings_frame, values=recruitment_times_list, width=8, state="readonly")
     recruitment_time_spinbox.pack(side="top", anchor="nw")
-    recruitment_time_spinbox.set(data[4][:-1])
-    expedited_plans_checkbutton = ttkTools.checkbutton_setup(settings_frame, display_text="Use expedited plans",
-                                                             saveValueTo_variable=use_expedited_plans_Var)
+    recruitment_time_spinbox.set(data[5][:-1])
+    expedited_plans_checkbutton = ttkTools.checkbutton_setup(settings_frame, display_text="Use expedited plans", saveValueTo_variable=use_expedited_plans_Var)
     expedited_plans_checkbutton.pack(side="top", anchor="nw")
-    if data[5][:-1] == "True":
+    if data[6][:-1] == "True":
         use_expedited_plans_Var.set(True)
+    prepare_recruitments_checkbutton = ttkTools.checkbutton_setup(settings_frame, display_text="Prepare recruitments afterwards", saveValueTo_variable=prep_recruitments_Var)
+    prepare_recruitments_checkbutton.pack(side="top", anchor="nw")
+    if data[7][:-1] == "True":
+        prep_recruitments_Var.set(True)
     def update_data_file():
         data[2] = emulator_path_entry.get() + "\n"
         data[3] = emulator_title_entry.get() + "\n"
-        data[4] = recruitment_time_spinbox.get() + "\n"
-        data[5] = str(use_expedited_plans_Var.get()) + "\n"
+        data[4] = recruitment_permits_entry.get() + "\n"
+        data[5] = recruitment_time_spinbox.get() + "\n"
+        data[6] = str(use_expedited_plans_Var.get()) + "\n"
+        data[7] = str(prep_recruitments_Var.get()) + "\n"
+        data[8] = "|".join(priority_listbox.get(0, "end")) + "\n"
         with open("data.txt", "w") as data_file:
             data_file.writelines(data)
         update_data()
     save_button = ttkTools.button_setup(settings_frame, display_text="Save", function=lambda: update_data_file())
     save_button.pack(side="top", anchor="nw")
-    # screen_capture_checkbox = ttkTools.checkbox_setup(settings_frame, display_text="Show screen capture", saveValueTo_variable=None)
-    # screen_capture_checkbox.pack(side="top", anchor="nw")
-    start_button = ttkTools.button_setup(settings_frame, display_text="Start", function=lambda: start_AutoRecruit())
+    start_button = ttkTools.button_setup(settings_frame, display_text="Start",
+                                         function=lambda: start_AutoRecruit(
+                                             emulator_path_entry.get(),
+                                             emulator_title_entry.get(),
+                                             recruitment_permits_entry.get(),
+                                             recruitment_time_spinbox.get(),
+                                             use_expedited_plans_Var.get(),
+                                             prep_recruitments_Var.get(),
+                                             priority_listbox.get(0, "end")
+                                         ))
     start_button.pack(side="top", anchor="nw")
     stop_button = ttkTools.button_setup(settings_frame, display_text="Force Stop", function=None)
     stop_button.pack(side="top", anchor="nw")
@@ -554,7 +679,7 @@ def database_tools_widgets():
         tag_options,
         list_variable=tkinter.StringVar(value=tagsPos_valuesList),
         select_mode="multiple",
-        stay_selected_when_unfocused=False,
+        stay_selected_when_unfocused=True,
         backdrop="ridge",
         height=6,
         width=7
@@ -563,7 +688,7 @@ def database_tools_widgets():
         tag_options,
         list_variable=tkinter.StringVar(value=tagsClass_valuesList),
         select_mode="multiple",
-        stay_selected_when_unfocused=False,
+        stay_selected_when_unfocused=True,
         backdrop="ridge",
         height=6,
         width=9
@@ -572,7 +697,7 @@ def database_tools_widgets():
         tag_options,
         list_variable=tkinter.StringVar(value=tagsSpec_valuesList),
         select_mode="multiple",
-        stay_selected_when_unfocused=False,
+        stay_selected_when_unfocused=True,
         backdrop="ridge",
         height=6,
         width=12
@@ -606,7 +731,7 @@ def database_tools_widgets():
                             )
     # configure operator_table
     def configure_operator_table():
-        operator_list = recruit_tools.select_all_from_Operators()
+        operator_list = recruit_tools.get_operator_data(get=["all"])
 
         # method for filling the operator form by selecting a row in the operator table
         def fill_operator_form_with_table_row(row, num_cols):
@@ -797,7 +922,7 @@ def database_tools_widgets():
                     delete_operator_window.geometry("400x200")
                     delete_operator_window.grab_set()
                     delete_operator_window.bind("<FocusOut>", lambda e: [delete_operator_window.bell(), delete_operator_window.focus_force()])
-                    operator_data = recruit_tools.select_operator_by_id(operator_id)
+                    operator_data = recruit_tools.get_operator_data(get=["all"], where=["id=" + operator_id])
                     if operator_data == None:
                         # error label
                         error_label = ttkTools.label_setup(delete_operator_window, display_text="Error: operator_id_" + operator_id + " not found")
