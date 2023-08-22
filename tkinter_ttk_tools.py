@@ -5,8 +5,8 @@ from typing import Union
 
 def setup(title: str, window_size, min_size=None):
     """
-    Everything will be created within this variable.\n
-    Widgets can be either packed or gridded, but not combined.
+    Everything will be created within this variable\n
+    Widgets can be either packed or gridded, but not combined
     """
     root = tkinter.Tk()
     root.title(title)
@@ -185,7 +185,7 @@ def listbox_setup(parent, list_variable=None, select_mode=None, stay_selected_wh
     listbox = tkinter.Listbox(parent,
                               listvariable=list_variable,
                               selectmode=select_mode,
-                              exportselection=stay_selected_when_unfocused,
+                              exportselection=not stay_selected_when_unfocused,
                               relief=backdrop,
                               height=height,
                               width=width,
@@ -194,12 +194,13 @@ def listbox_setup(parent, list_variable=None, select_mode=None, stay_selected_wh
     return listbox
 
 
-def dragdrop_listbox_setup(parent, list_variable=None, stay_selected_when_unfocused=None, backdrop=None, height=None, width=None, state=None):
+def dragdrop_listbox_setup(parent, list_variable=None, select_mode=None, stay_selected_when_unfocused=None, backdrop=None, height=None, width=None, state=None):
     """
-    tkinter listbox with dragable items for reordering
+    tkinter listbox with dragable items for reordering\n
     Use tkinter type variables when using list_variable
     :param parent:
     :param saveTo_variable:
+    :param select_mode:
     :param stay_selected_when_unfocused:
     :param backdrop: Literal["raised", "sunken", "flat", "ridge", "solid", "groove"]
     :param height:
@@ -211,8 +212,8 @@ def dragdrop_listbox_setup(parent, list_variable=None, stay_selected_when_unfocu
             tkinter.Listbox.__init__(self,
                                      parent,
                                      listvariable=list_variable,
-                                     selectmode="single",
-                                     exportselection=stay_selected_when_unfocused,
+                                     selectmode=select_mode,
+                                     exportselection=not stay_selected_when_unfocused,
                                      relief=backdrop,
                                      height=height,
                                      width=width,
