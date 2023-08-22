@@ -32,7 +32,7 @@ class tools:
             "SPE": "Specialist",
             "SUP": "Supporter",
             "VAN": "Vanguard",
-            "AOE": "AOE",
+            "AOE": "AoE",
             "CDC": "Crowd Control",
             "DBF": "Debuff",
             "DFS": "Defense",
@@ -222,7 +222,7 @@ class tools:
             ("VAN", "Vanguard", "Class")
         ]
         data4 = [
-            ("AOE", "AOE", "Spec"),
+            ("AOE", "AoE", "Spec"),
             ("CDC", "Crowd Control", "Spec"),
             ("DBF", "Debuff", "Spec"),
             ("DFS", "Defense", "Spec"),
@@ -245,8 +245,9 @@ class tools:
 
 
     def view_all_tables(self):
-        """Prints the name of all tables in the database"""
-
+        """
+        Prints the name of all tables in the database
+        """
         # The table containing the names of all tables is: sqlite_master
         self.cur.execute("select name from sqlite_master where type='table'")
         table_list = self.cur.fetchall()
@@ -254,52 +255,88 @@ class tools:
             print(row[0])
 
 
-    def select_all_from_Operators(self, get_full_tags=False):
+    def split_tags(self, tags_keys: str):
+        """
+        Splits a string of coded tags into their individual codes\n
+        Returns them in a list
+        """
+        if len(tags_keys) % 3 != 0:
+            print("Error: tags string is formatted incorrectly")
+            return
+        tags_list = []
+        while tags_keys:
+            tag = tags_keys[0:3]
+            tags_keys = tags_keys[3:]
+            tags_list.append(tag)
+        return tags_list
+
+
+    def decode_tags(self, tags_keys: str):
+        """
+        Splits a string of coded tags into their full-named tags\n
+        Returns them in a list
+        """
+        if len(tags_keys) % 3 != 0:
+            print("Error: tags string is formatted incorrectly")
+            return
+        tags_full = []
+        while tags_keys:
+            tag = tags_keys[0:3]
+            tags_keys = tags_keys[3:]
+            tags_full.append(self.tag_dict.get(tag))
+        return tags_full
+
+
+    def get_operator_data(self, get: list, where=None, sort_order=None, limit=None, offset=None, get_full_tags=False, reduce_nested_lists=False):
+        """
+        get: "id"|"rarity|"name"|"tags"\n
+        sort_order: List[List[str]] sorting parameters of the form [sort, order]\n
+        sort: "id"|"rarity|"name"\n
+        order: "asc"|"desc"\n
+        """
         operator_list = []
-        res = self.cur.execute("select * from Operators")
-        if not get_full_tags:
-            for row in res:
-                operator_list.append(row)
-            return operator_list
+        query = ""
+        # SELECT statement
+        columns = []
+        col_list = ["id", "rarity", "name", "tags"]
+        if get[0] == "all" or get[0] == "ALL" or get[0] == "*":
+            columns = col_list
+            query = "select * from Operators"
         else:
-            for row in res:
-                operator_row = self.transform_Operators_row_to_full_tags(row)
-                operator_list.append(operator_row)
-            return operator_list
-
-
-    def select_operator_by_id(self, operator_id: int):
-        """
-        Returns the operator data of the given operator id as a tuple, where:\n
-        tuple[0] = operator id\n
-        tuple[1] = operator rarity\n
-        tuple[2] = operator name\n
-        tuple[3] = operator tags\n
-        Returns None if operator id is not found
-        """
-        return self.cur.execute("select * from Operators where id=?", [str(operator_id)]).fetchone()
-
-
-    def transform_Operators_row_to_full_tags(self, table_row, just_tags=False):
-        """Use only for entities in sqlite3.Cursor objects"""
-        if not just_tags:
-            tags_col = 3
-            idx = 0
-            operator_row = []
-            for col in table_row:
-                if idx == tags_col:
-                    tags_full = self.decode_tags(col)
-                    operator_row.append(tags_full)
-                else:
-                    operator_row.append(col)
-                idx = idx + 1
-            return operator_row
+            for col_name in col_list:
+                if col_name.lower() in get or col_name.upper() in get:
+                    columns.append(col_name)
+            query = "select " + ", ".join(columns) + " from Operators"
+        # WHERE clause
+        if where:
+            query += " where " + " or ".join(where)
+        # ORDER BY clause
+        if sort_order:
+            query += " order by " + ", ".join([" ".join(group) for group in sort_order])
+        # LIMIT clause
+        if limit:
+            query += " limit " + str(limit)
+            # OFFSET clause
+            if offset:
+                query += " offset " + str(offset)
+        res = self.cur.execute(query)
+        if reduce_nested_lists and len(columns) == 1:
+            for col in res:
+                operator_list.append(col[0])
         else:
-            return self.decode_tags(table_row[0])
+            for col in res:
+                operator_list.append(list(col))
+        if get_full_tags:
+            tag_col = columns.index("tags")
+            for i in range(len(operator_list)):
+                operator_list[i][tag_col] = self.decode_tags(operator_list[i][tag_col])
+        return operator_list
 
 
     def insert_new_operator(self, operator_name: str, rarity: int, tag_list):
-        """tags is a list of tag codes. Refer to the tags legend for the code of each tag."""
+        """
+        tags is a list of tag codes. Refer to the tags legend for the code of each tag.
+        """
         if not tag_list:
             print("Please select some tags")
             return
@@ -317,18 +354,16 @@ class tools:
 
 
     def update_operator(self, orig_id=None, orig_name=None, new_name=None, new_tags=[]):
-        """Provide either orig_id or orig_name, then provide any number of new variables.
-
-        If both orig_id or orig_name are provided, then orig_id will be used to identify the operator.
-
-        new_tags is a list of tag codes. Refer to the tags legend for the code of each tag."""
-
+        """
+        Provide either orig_id or orig_name, then provide any number of new variables.\n
+        If both orig_id or orig_name are provided, then orig_id will be used to identify the operator.\n
+        new_tags is a list of tag codes. Refer to the tags legend for the code of each tag.
+        """
         # return if identifiers are not provided
         if orig_id == None and orig_name == None:
             print("One of the following was not provided: orig_id, orig_name")
             print("The table will not be updated")
             return
-
         res = self.cur.execute("select id from Operators")
         ids_list = [row[0] for row in res]
         res = self.cur.execute("select name from Operators")
@@ -358,7 +393,6 @@ class tools:
                 print("Their IDs are: ", end="")
                 print(*op_id)
                 return
-
         # return if new entities are not provided
         if new_name == None and new_tags == None:
             print("At least one of the following was not provided: new_name, new_tags")
@@ -381,7 +415,7 @@ class tools:
             operator_tags = "".join(new_tags)
             entities.append(operator_tags)
 
-        # prepare update query
+        # UPDATE statement
         query = "update Operators set "
         for i in range(len(provided_entities)):
             if provided_entities[i]:
@@ -404,52 +438,13 @@ class tools:
 
 
     def delete_operator(self, id):
-        self.cur.execute("delete from Operators where id=?", [str(id)])
+        self.cur.execute("delete from Operators where id=?", (str(id)))
         self.con.commit()
 
 
-    def delete_all_rows(self, table_name):
-        query = "delete from " + table_name
-        self.cur.execute(query)
-        self.con.commit()
-
-
-    def split_tags(self, tags_keys: str):
-        """
-        Splits a string of coded tags into their individual codes.\n
-        Returns them in a list.
-        """
-        if len(tags_keys) % 3 != 0:
-            print("Error: tags string is formatted incorrectly")
-            return
-        tags_list = []
-        while tags_keys:
-            tag = tags_keys[0:3]
-            tags_keys = tags_keys[3:]
-            tags_list.append(tag)
-        return tags_list
-
-
-    def decode_tags(self, tags_keys: str):
-        """
-        Splits a string of coded tags into their full-named tags.\n
-        Returns them in a list.
-        """
-        if len(tags_keys) % 3 != 0:
-            print("Error: tags string is formatted incorrectly")
-            return
-        tags_full = []
-        while tags_keys:
-            tag = tags_keys[0:3]
-            tags_keys = tags_keys[3:]
-            tags_full.append(self.tag_dict.get(tag))
-        return tags_full
-
-
-    def get_specific_rarity_tags(self, rarity: int):
+    def get_unique_tags(self, rarity: int):
         """
         Returns a list of tag codes
-        :return:
         """
         tags_list = []
         result = self.cur.execute("select tags from Operators where rarity=?", (str(rarity)))
@@ -463,10 +458,9 @@ class tools:
     def get_non_distinctions_tags(self):
         """
         Returns a list of tag codes
-        :return:
         """
         rarity_2_3_tags_list = []
-        all_tags = self.get_specific_rarity_tags(2) + self.get_specific_rarity_tags(3)
+        all_tags = self.get_unique_tags(2) + self.get_unique_tags(3)
         for tags in all_tags:
             if tags not in rarity_2_3_tags_list:
                 rarity_2_3_tags_list.append(tags)
@@ -504,7 +498,6 @@ class tools:
             1st-order indices represents number of selected tags\n
             2nd-order indices hold the tag combination
             """
-
             recruitment_tags = []
             for num_tags in range(1, max_combo+1):
                 tag_combos = []
@@ -531,8 +524,8 @@ class tools:
 
         file = open("recruitment_combinations.txt", "w")
         # get tag combinations for non-distinction operators
-        r2_list = self.get_specific_rarity_tags(2)
-        r3_list = self.get_specific_rarity_tags(3)
+        r2_list = self.get_unique_tags(2)
+        r3_list = self.get_unique_tags(3)
         r2_tag_combos = get_recruitment_combinations(r2_list)
         r3_tag_combos = get_recruitment_combinations(r3_list)
         non_dist_combos = []
@@ -547,7 +540,7 @@ class tools:
         self.non_dist_combos = non_dist_combos
 
         # get tag combinations for rarity 4 operators
-        r4_list = self.get_specific_rarity_tags(4)
+        r4_list = self.get_unique_tags(4)
         r4_tag_combos = get_recruitment_combinations(r4_list)
         r4_tag_combos_dist = []
         # remove r2 and r3 combos from r4
@@ -563,7 +556,7 @@ class tools:
         self.r4_tag_combos_dist = r4_tag_combos_dist
 
         # get tag combinations for rarity 5 operators
-        r5_list = self.get_specific_rarity_tags(5)
+        r5_list = self.get_unique_tags(5)
         r5_tag_combos = get_recruitment_combinations(r5_list)
         r5_tag_combos_dist = []
         # remove r2, r3, and r4 combos from r5
@@ -580,7 +573,7 @@ class tools:
         self.r5_tag_combos_dist = r5_tag_combos_dist
 
         # get tag combinations for rarity 6 operators
-        r6_list = self.get_specific_rarity_tags(6)
+        r6_list = self.get_unique_tags(6)
         r6_tag_combos = get_recruitment_combinations(r6_list)
         # remove r2, r3, r4, and r5 combos from r6
         r6_tag_combos_dist = []
@@ -653,7 +646,6 @@ class tools:
         """
         Chooses based on highest distinction return
         """
-
         def read_util(max_combo=3):
             list = []
             for r in range(max_combo):
@@ -696,7 +688,6 @@ class tools:
         """
         Chooses based on highest distinction return
         """
-
         def find_possible_combos(all_combos):
             # compares each combo in possible_combos with each combo in all_combos
             possible_combos = []
@@ -746,7 +737,7 @@ class tools:
     #       SUP - Supporter
     #       VAN - Vanguard
     #   Specification:
-    #       AOE - AOE
+    #       AOE - AoE
     #       CDC - Crowd Control
     #       DBF - Debuff
     #       DFS - Defense
@@ -764,7 +755,8 @@ class tools:
 
 def test():
     def print_operators_table():
-        operator_table = db_tools.select_all_from_Operators(get_full_tags=True)
+        operator_id = "5001"
+        operator_table = db_tools.get_operator_data(get=["all"])
         for row in operator_table:
             print(row)
 
@@ -785,7 +777,9 @@ def test():
 
     db_tools = tools()
     # test code here
+    print("--test--")
     print()
+    print("--test--")
     db_tools.close_db()
 
 
