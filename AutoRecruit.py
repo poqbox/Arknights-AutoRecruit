@@ -3,6 +3,7 @@ import os
 import subprocess
 import time
 import win32gui
+from pynput.keyboard import Key, Listener
 import tkinter
 from tkinter import font
 from tkinter import scrolledtext as tk_scrolledtext
@@ -17,7 +18,9 @@ import recruitment_database_tools as recruitTools
 # Notable sections:
 #   --psm N
 # binding events in tkinter info: https://stackoverflow.com/questions/7299955/tkinter-binding-a-function-with-arguments-to-a-widget
-
+# does not account for:
+#   not enough recruitment tickets
+#   not enough expedited plans
 
 data = []
 with open("data.txt", "r") as data_file:
@@ -31,6 +34,7 @@ emulator_path = data[2][:-1]
 # window title of Google Play Games
 emulator_title = data[3][:-1]
 AutoRecruit_ver = overall_ver + ".[" + recruit_ver + "]"
+auto_recruit_window_name = "Auto Recruit"
 
 
 def update_data():
@@ -61,19 +65,24 @@ def update_data():
 # Recruit button position:      (1389, 701), (1388, 811), (1628, 830)
 # Start button:                 (799, 712),               (1106, 814)
 #
+# Recruit text position:        (219, 190),  (219, 228),  (328, 228)
 # Recruit box 1:                (26, 273),   (26, 644),   (943, 644)
 # Recruit box 2:                (973, 273),  (973, 644),  (1890, 644)
 # Recruit box 3:                (26, 689),   (26, 1060),  (943, 1060)
 # Recruit box 4:                (973, 689),  (973, 1060), (1890, 1060)
 # Recruitment permits count:    (1248, 37),  (1248, 79),  (1338, 79)
+# Expedite button:              (448, 522),  (448, 617),  (922, 617)
+# Confirm expedite button:      (960, 704),  (960, 815),  (1919, 814)
+# Hire recruit button:          (45, 525),   (45, 618),   (930, 618)
+# Skip gacha animation:         (1762, 15),  (1762, 116), (1902, 116)
 #
 # tested in recruit box 1       top_left     bot_left     bot_right
 # Recruitment time (hours):     (632, 299),  (632, 388),  (742, 388)
 # Recruitment time (minutes):   (878, 299),  (878, 388),  (988, 388)
 # Recruitment time (seconds):   (1121, 299), (1121, 388), (1231, 388)
 # Hour up button:               (570, 189),  (570, 260),  (787, 260)
-# Hour down button:             (817, 190),  (817, 260),  (1034, 260)
-# Minute up button:             (567, 409),  (567, 481),  (782, 481)
+# Hour down button:             (567, 409),  (567, 481),  (782, 481)
+# Minute up button:             (817, 190),  (817, 260),  (1034, 260)
 # Minute down button:           (812, 409),  (812, 481),  (1030, 481)
 # Recruitment tag 1:            (563, 540),  (563, 608),  (778, 608)
 # Recruitment tag 2:            (813, 540),  (813, 608),  (1028, 608)
@@ -187,34 +196,171 @@ def launch_from_GooglePlayGames(emulator_path, emulator_title):
     return False
 
 
-def start_AutoRecruit(emulator_path: str, emulator_title: str, recruit_num: int=0, recruit_time: str="00:00", use_expedited_plans=False, prepare_recruitment=False, priority_tags=[]):
-    launched_Arknights = launch_from_GooglePlayGames(emulator_path, emulator_title)
+def start_AutoRecruit(emulator_path: str, emulator_title: str, recruit_num: int=0, recruit_time: str="00:00", use_expedited_plans=False, prepare_recruitment=False, priority_tags=[], skip_emulator_launch=False):
+    """
+    Valid starting screens for skip_emulator_launch:\n
+    Arknights home screen\n
+    Arknights recruitment menu
+    """
+    launched_Arknights = False
+    entered_Arknights_home_page = False
+    if skip_emulator_launch:
+        launched_Arknights = True
+        entered_Arknights_home_page = True
+    else:
+        launched_Arknights = launch_from_GooglePlayGames(emulator_path, emulator_title)
     if launched_Arknights:
-        time.sleep(10)
-        Arknights = screen_capture_tools.Tools("Arknights")
-        desktop.left_click(scr_mdpt[0], scr_mdpt[1])
-        time.sleep(5)
-        entered_Arknights_home_page = False
-        for i in range(4):
-            if Arknights.find_text_in_window("START", bound=((799, 712), (1106, 814)), bound_text=False, quick=True):
-                desktop.left_click(950, 763)
-                time.sleep(5)
-                entered_Arknights_home_page = True
-                break
+        Arknights = None
+        if skip_emulator_launch:
+            Arknights = screen_capture_tools.Tools("Arknights")
+            ark_hdl = win32gui.FindWindow(None, "Arknights")
+            win32gui.SetForegroundWindow(ark_hdl)
+            time.sleep(0.5)
+        else:
+            time.sleep(10)
+            Arknights = screen_capture_tools.Tools("Arknights")
             desktop.left_click(scr_mdpt[0], scr_mdpt[1])
             time.sleep(5)
+            entered_Arknights_home_page = False
+            for i in range(4):
+                if Arknights.find_text_in_window("START", bound=((799, 712), (1106, 814)), bound_text=False, quick=True):
+                    desktop.left_click(950, 763)
+                    time.sleep(5)
+                    entered_Arknights_home_page = True
+                    break
+                desktop.left_click(scr_mdpt[0], scr_mdpt[1])
+                time.sleep(5)
 
-        # open Recruit menu
+        # open recruit menu
         if entered_Arknights_home_page:
-            # take screenshot of recruitment label and deskew it
-            img = Arknights.take_bounded_screenshot((1395, 645), (1625, 715), save_screenshot=False)
-            img = Arknights.skew_image(img, ((0, 0), (0, 55), (230, 70)), ((0, 0), (0, 55), (235, 55)), save_image=False)
-            if Arknights.find_text_in_image(img, "Recruitment"):
-                desktop.left_click(1509, 755)
+            in_recruit_menu = False
+            # determine screen location
+            if skip_emulator_launch:
+                img = Arknights.take_bounded_screenshot((219, 190), (328, 228), save_screenshot=False)
+                if Arknights.find_text_in_image(img, "Recruit"):
+                    in_recruit_menu = True
+            if not in_recruit_menu:
+                # take screenshot of recruitment label and deskew it
+                img = Arknights.take_bounded_screenshot((1395, 645), (1625, 715), save_screenshot=False)
+                img = Arknights.skew_image(img, ((0, 0), (0, 55), (230, 70)), ((0, 0), (0, 55), (235, 55)), save_image=False)
+                if Arknights.find_text_in_image(img, "Recruitment"):
+                    # click the button to open recruit menu
+                    desktop.left_click(1509, 755)
+                    in_recruit_menu = True
+                    time.sleep(2)
+            if in_recruit_menu:
+                img = Arknights.take_bounded_screenshot((1248, 37), (1338, 79), save_screenshot=False)
+                num_recruit_permits, img = Arknights.detect_text_in_image(img)
+                output_text("Starting number of recruitment permits: " + num_recruit_permits)
+                tag_positions_list = [[(563, 540), (778, 608)],
+                                      [(813, 540), (1028, 608)],
+                                      [(1063, 540), (1278, 608)],
+                                      [(563, 648), (778, 716)],
+                                      [(813, 648), (1028, 716)]
+                                      ]
+                allTags_dict = recruit_tools.tag_dict
+                allTag_valuesList = list(allTags_dict.values())
+                allTag_keysList = list(allTags_dict.keys())
+                # begin recruitment loop
+                for i in range (recruit_num):
+                    # enter recruit setup
+                    desktop.left_click(484, 458)
+                    time.sleep(0.5)
+                    available_tags = []
+                    tagToPos_dict = {}
+                    # find tags
+                    for pt1, pt2 in tag_positions_list:
+                        tag_recognized = False
+                        # tries to recognize the tag three times before returning and giving an error message
+                        for tries in range(3):
+                            img = Arknights.take_bounded_screenshot(pt1, pt2, save_screenshot=False)
+                            detected_text, img = Arknights.detect_text_in_image(img)
+                            for tag in allTag_valuesList:
+                                if tag in detected_text:
+                                    if tag in available_tags:
+                                        output_text("Warning: recognized duplicate tag.\nContinuing with operation.\n")
+                                    else:
+                                        tag_code = allTag_keysList[allTag_valuesList.index(tag)]
+                                        available_tags.append(tag_code)
+                                        tagToPos_dict[tag_code] = (pt1, pt2)
+                                    tag_recognized = True
+                                    break
+                            if tag_recognized:
+                                break
+                            time.sleep(1)
+                        if not tag_recognized:
+                            output_text("Error: Failed to recognize tag.\n")
+                            auto_hdl = win32gui.FindWindow(None, auto_recruit_window_name)
+                            win32gui.SetForegroundWindow(auto_hdl)
+                            return
+                    # determine best tag combination
+                    result = recruit_tools.find_best_tags(available_tags, priority_tags)
+                    if result == None:
+                        # adjust time
+                        hours = int(recruit_time[0:2])
+                        minutes = int(recruit_time[3:5])
+                        for h in range(1, hours):
+                            desktop.left_click(678, 224)
+                            time.sleep(0.5)
+                        for m in range(0, minutes, 10):
+                            desktop.left_click(925, 225)
+                            time.sleep(0.5)
+                    else:
+                        best_tags = result[0]
+                        rarity = result[1]
+                        # click on tags
+                        for tag in best_tags:
+                            pts = tagToPos_dict[tag]
+                            desktop.left_click((pts[0][0] + pts[1][0])/2, (pts[0][1] + pts[1][1])/2)
+                            time.sleep(0.5)
+                        # adjust recruitment time
+                        if rarity == 4 or rarity == 5 or rarity == 6:
+                            desktop.left_click(674, 445)
+                            time.sleep(0.5)
+                    # confirm recruitment
+                    time.sleep(0.5)
+                    desktop.left_click(1467, 871)
+                    time.sleep(1)
+                    if use_expedited_plans:
+                        time.sleep(0.5)
+                        desktop.left_click(685, 569)
+                        time.sleep(0.5)
+                        desktop.left_click(1439, 759)
+                        time.sleep(1)
+                    # hire recruitment operator
+                    desktop.left_click(487, 571)
+                    time.sleep(1)
+                    # contingency hire
+                    desktop.left_click(487, 571)
+                    time.sleep(1)
+                    desktop.left_click(1832, 65)
+                    # exit operator introduction
+                    in_recruit_menu = False
+                    for i in range(16):
+                        desktop.left_click(484, 458)
+                        time.sleep(1)
+                        img = Arknights.take_bounded_screenshot((219, 190), (328, 228), save_screenshot=False)
+                        # break when in recruit menu
+                        if Arknights.find_text_in_image(img, "Recruit"):
+                            in_recruit_menu = True
+                            break
+                    if not in_recruit_menu:
+                        output_text("Stuck in operator introduction.\n")
+                        auto_hdl = win32gui.FindWindow(None, auto_recruit_window_name)
+                        win32gui.SetForegroundWindow(auto_hdl)
+                        return
+                output_text(f"Recruited {recruit_num} times. Ending AutoRecruit.\n")
+                img = Arknights.take_bounded_screenshot((1248, 37), (1338, 79), save_screenshot=False)
+                num_recruit_permits, img = Arknights.detect_text_in_image(img)
+                output_text("Remaining number of recruitment permits: " + num_recruit_permits)
+            else:
+                output_text("Failed to enter Arknights' recruitment menu.\n")
         else:
-            print("Failed to enter Arknights' home page")
+            output_text("Failed to enter Arknights' home screen.\n")
     else:
-        print("Failed to launch Arknights")
+        output_text("Failed to launch Arknights.\n")
+    auto_hdl = win32gui.FindWindow(None, auto_recruit_window_name)
+    win32gui.SetForegroundWindow(auto_hdl)
 
     # win32gui.CloseWindow(emu_hdl)
 
@@ -232,7 +378,7 @@ def swap_frame_grids(old_frame: ttk.Frame, new_frame: ttk.Frame):
     old_frame.grid_remove()
     new_frame.grid()
 
-root = ttkTools.setup("Auto Recruit", window_size=(992, 450), min_size=(500, 200))
+root = ttkTools.setup(auto_recruit_window_name, window_size=(992, 450), min_size=(500, 200))
 ttkTools.configure_grid(root,
                         [
                             [0, None, None, None, 1]
@@ -268,7 +414,7 @@ tagsClass_dict = {
 }
 tagsSpec_dict = {
     "AOE": "AoE",
-    "CDC": "Crowd Control",
+    "CDC": "Crowd-Control",
     "DBF": "Debuff",
     "DFS": "Defense",
     "DPR": "DP-Recovery",
@@ -372,6 +518,8 @@ def auto_recruit_widgets():
     back_button.grid(column=0, row=0, sticky="NW")
 
     # output textbox
+    global output_text
+    global output_indented_text
     output_textbox = tk_scrolledtext.ScrolledText(auto_recruit_frame, height=18)
     output_textbox.grid(column=1, row=1, sticky="NEW")
     output_text_font = font.nametofont(output_textbox.cget("font"))
@@ -457,6 +605,7 @@ def auto_recruit_widgets():
     # frame containing the setup for AutoRecruit
     settings_frame = ttkTools.frame_setup(auto_recruit_frame)
     settings_frame.grid(column=2, row=1, sticky="NSEW")
+    skip_emulator_launch_Var = tkinter.BooleanVar()
     use_expedited_plans_Var = tkinter.BooleanVar()
     prep_recruitments_Var = tkinter.BooleanVar()
     operators_list = recruit_tools.get_operator_data(get=["name"], sort_order=[["name", "asc"]], reduce_nested_lists=True)
@@ -480,6 +629,8 @@ def auto_recruit_widgets():
     emulator_title_entry = ttkTools.entry_setup(settings_frame, width=32)
     emulator_title_entry.pack(side="top", anchor="nw")
     emulator_title_entry.insert(0, emulator_title)
+    skip_emulator_checkbutton = ttkTools.checkbutton_setup(settings_frame, display_text="Start from Arknights home screen", saveValueTo_variable=skip_emulator_launch_Var)
+    skip_emulator_checkbutton.pack(side="top", anchor="nw")
     # frame for recruitment_permits widgets --start--
     recruitment_permits_frame = ttkTools.frame_setup(settings_frame)
     recruitment_permits_frame.pack(side="top", anchor="nw")
@@ -610,15 +761,14 @@ def auto_recruit_widgets():
                                          function=lambda: start_AutoRecruit(
                                              emulator_path_entry.get(),
                                              emulator_title_entry.get(),
-                                             recruitment_permits_entry.get(),
+                                             int(recruitment_permits_entry.get()),
                                              recruitment_time_spinbox.get(),
                                              use_expedited_plans_Var.get(),
                                              prep_recruitments_Var.get(),
-                                             priority_listbox.get(0, "end")
+                                             priority_listbox.get(0, "end"),
+                                             skip_emulator_launch=skip_emulator_launch_Var.get()
                                          ))
     start_button.pack(side="top", anchor="nw")
-    stop_button = ttkTools.button_setup(settings_frame, display_text="Force Stop", function=None)
-    stop_button.pack(side="top", anchor="nw")
 
     # settings frame setup --end--
 
@@ -627,8 +777,7 @@ def auto_recruit_widgets():
 
 def database_tools_widgets():
     back_button = ttkTools.button_setup(database_tools_frame, display_text="Back",
-                                        function=lambda: [swap_frame_grids(database_tools_frame, home_frame),
-                                                          recruit_tools.calculate(), recruit_tools.close_db()])
+                                        function=lambda: [swap_frame_grids(database_tools_frame, home_frame), recruit_tools.calculate()])
     back_button.grid(column=0, row=0, sticky="NW")
 
 
@@ -781,6 +930,7 @@ def database_tools_widgets():
     table_frame_2 = tk_scrolledtext.ScrolledText(database_tools_frame, height=18)
     table_frame_2.grid(column=1, row=1, sticky="NEW")
     def configure_tag_combinations_table():
+        table_frame_2.delete(1.0, "end")
         tag_combinations_txt = [recruit_tools.non_dist_combos,
                                 recruit_tools.r4_tag_combos_dist,
                                 recruit_tools.r5_tag_combos_dist,
@@ -936,7 +1086,7 @@ def database_tools_widgets():
                         operator_data_label = ttkTools.label_setup(delete_operator_window, display_text=operator_data_str, width=200)
                         operator_data_label.pack(side="top")
                         confirm_button = ttkTools.button_setup(delete_operator_window, display_text="CONFIRM",
-                                                               function=lambda: [recruit_tools.delete_operator(id=int(operator_id)), delete_operator_window.destroy(), delete_operator_window.update(), configure_tables()])
+                                                               function=lambda: [recruit_tools.delete_operator(id=int(operator_id)), delete_operator_window.destroy(), delete_operator_window.update(), recruit_tools.calculate(), configure_tables()])
                         confirm_button.pack(side="top")
                     cancel_button = ttkTools.button_setup(delete_operator_window, display_text="CANCEL", function=lambda: [delete_operator_window.destroy(), delete_operator_window.update()])
                     cancel_button.pack(side="top")
@@ -962,8 +1112,10 @@ def database_tools_widgets():
                             tags.append(tagsSpec_keysList[i])
                     if statement_type == "update":
                         recruit_tools.update_operator(orig_name=operator_name, new_tags=tags)
+                        recruit_tools.calculate()
                     if statement_type == "insert":
                         recruit_tools.insert_new_operator(operator_name=operator_name, rarity=rarity, tag_list=tags)
+                    recruit_tools.calculate()
                 nameVar.set("")
                 rarityVar.set("")
                 idVar.set("")
