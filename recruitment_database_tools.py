@@ -33,7 +33,7 @@ class tools:
             "SUP": "Supporter",
             "VAN": "Vanguard",
             "AOE": "AoE",
-            "CDC": "Crowd Control",
+            "CDC": "Crowd-Control",
             "DBF": "Debuff",
             "DFS": "Defense",
             "DPR": "DP-Recovery",
@@ -223,7 +223,7 @@ class tools:
         ]
         data4 = [
             ("AOE", "AoE", "Spec"),
-            ("CDC", "Crowd Control", "Spec"),
+            ("CDC", "Crowd-Control", "Spec"),
             ("DBF", "Debuff", "Spec"),
             ("DFS", "Defense", "Spec"),
             ("DPR", "DP-Recovery", "Spec"),
@@ -684,38 +684,74 @@ class tools:
         return non_dist_combos, r4_tag_combos_dist, r5_tag_combos_dist, r6_tag_combos_dist
 
 
-    def find_best_tags(self, available_tags: list):
+    def find_available_combos(self, available_tags: list, sample_group: list):
         """
-        Chooses based on highest distinction return
+        Returns a list of possible tag combinations\n
+        If invalid tags are given, they will be removed from the list before searching
         """
-        def find_possible_combos(all_combos):
-            # compares each combo in possible_combos with each combo in all_combos
-            possible_combos = []
-            possible_combos.append(self.get_list_of_combinations(available_tags, 1))
-            possible_combos.append(self.get_list_of_combinations(available_tags, 2))
-            possible_combos.append(self.get_list_of_combinations(available_tags, 3))
-            available_combos = []
-            # get combos in possible_combos
-            for possible_combos_row in possible_combos:
-                available_combos_row = []
-                for combo in possible_combos_row:
-                    # get combos in all_combos
-                    for combos_list in all_combos:
-                        if combo in combos_list:
-                            available_combos_row.append(combo)
-                available_combos.append(available_combos_row)
-            return available_combos
-
-        # order available_tags based on self.tag_legend
+        # organize available_tags
         available_tags = [x for x in self.tag_legend if x in available_tags]
-        possible_non_dist_combos = find_possible_combos(self.non_dist_combos)
-        possible_r4_combos = find_possible_combos(self.r4_tag_combos_dist)
-        possible_r5_combos = find_possible_combos(self.r5_tag_combos_dist)
-        possible_r6_combos = find_possible_combos(self.r6_tag_combos_dist)
-        return possible_non_dist_combos, possible_r4_combos, possible_r5_combos, possible_r6_combos
+        possible_combos = []
+        possible_combos.extend(self.get_list_of_combinations(available_tags, 1))
+        possible_combos.extend(self.get_list_of_combinations(available_tags, 2))
+        possible_combos.extend(self.get_list_of_combinations(available_tags, 3))
+        available_combos = []
+        # compare each combo in possible_combos with each combo in all_combos
+        # get combos in possible_combos
+        for combo in possible_combos:
+            # get combos in all_combos
+            if combo in sample_group:
+                available_combos.append(combo)
+        return available_combos
+
+    def find_best_tags(self, available_tags: list, priority_tags: list=None):
+        """
+        If priority_tags is empty, chooses the least number of tags for the highest available rarity\n
+        If invalid tags are given, they will be removed from the list before searching
+        Returns a tuple of a string of tags and the recruitment rarity
+        """
+        # organize available_tags
+        available_tags = [x for x in self.tag_legend if x in available_tags]
+
+        # if priority_tags is None or empty, find in the order [6-star, 5-star, 4-star, None]
+        if priority_tags == None or not priority_tags:
+            # order available_tags based on self.tag_legend
+            possible_r6_combos = self.find_available_combos(available_tags, [combo for sub_list in self.r6_tag_combos_dist for combo in sub_list])
+            if possible_r6_combos:
+                return possible_r6_combos[0], 6
+            possible_r5_combos = self.find_available_combos(available_tags, [combo for sub_list in self.r5_tag_combos_dist for combo in sub_list])
+            if possible_r5_combos:
+                return possible_r5_combos[0], 5
+            possible_r4_combos = self.find_available_combos(available_tags, [combo for sub_list in self.r4_tag_combos_dist for combo in sub_list])
+            if possible_r4_combos:
+                return possible_r4_combos[0], 4
+            return None
+        operator_names = []
+        res = self.cur.execute("select name from Operators")
+        for row in res:
+            operator_names.append(row[0])
+        for priority in priority_tags:
+            possible_combos = []
+            rarity = 0
+            # if priority in operator_names:
+            #     self.decode_tags(self.cur.execute("select tags from Operators where name=?", (priority)).fetchone()[0])
+            if priority == "6-star" or priority == "rarity 6":
+                possible_combos = self.find_available_combos(available_tags, [combo for sub_list in self.r6_tag_combos_dist for combo in sub_list])
+                rarity = 6
+            elif priority == "5-star" or priority == "rarity 5":
+                possible_combos = self.find_available_combos(available_tags, [combo for sub_list in self.r5_tag_combos_dist for combo in sub_list])
+                rarity = 5
+            elif priority == "4-star" or priority == "rarity 4":
+                possible_combos = self.find_available_combos(available_tags, [combo for sub_list in self.r4_tag_combos_dist for combo in sub_list])
+                rarity = 4
+            if possible_combos:
+                return possible_combos[0], rarity
+        return None
 
 
-    # [Il Siracusano] update
+
+
+    # [Where Vernal Winds Will Never Blow] update
     # Recruitment updates typically happen during events with limited-time operators
     # tags legend:
     #   a tag is represented by a string of three letters
@@ -738,7 +774,7 @@ class tools:
     #       VAN - Vanguard
     #   Specification:
     #       AOE - AoE
-    #       CDC - Crowd Control
+    #       CDC - Crowd-Control
     #       DBF - Debuff
     #       DFS - Defense
     #       DPR - DP-Recovery
@@ -764,21 +800,30 @@ def test():
         db_tools.view_all_tables()
 
     def test_tag_calculator():
-        available_combos = db_tools.find_best_tags(["MEL", "STR", "DEF", "SNI", "TOP"])
+        available_tags = ["MEL", "STR", "DBF", "SNI", "TOP"]
+        possible_r6_combos = db_tools.find_available_combos(available_tags, [combo for sub_list in db_tools.r6_tag_combos_dist for combo in sub_list])
+        possible_r5_combos = db_tools.find_available_combos(available_tags, [combo for sub_list in db_tools.r5_tag_combos_dist for combo in sub_list])
+        possible_r4_combos = db_tools.find_available_combos(available_tags, [combo for sub_list in db_tools.r4_tag_combos_dist for combo in sub_list])
+        possible_non_dist_combos = db_tools.find_available_combos(available_tags, [combo for sub_list in db_tools.non_dist_combos for combo in sub_list])
+        possible_combos = [possible_r6_combos, possible_r5_combos, possible_r4_combos, possible_non_dist_combos]
         for i in range(0, 4):
-            if i == 0:
+            if i == 3:
                 print("non_distinction tags:")
             else:
-                print(str(i + 3) + "-star tags:")
-            for row in reversed(available_combos[i]):
-                for combo in row:
-                    print("\t", end="")
-                    print(combo)
+                print(str(6 - i) + "-star tags:")
+            for combo in possible_combos[i]:
+                print("\t", end="")
+                print(combo)
 
     db_tools = tools()
     # test code here
     print("--test--")
-    print()
+    # --------------------------------
+    # --------------------------------
+    tags = db_tools.find_best_tags(["MEL", "STR", "DBF", "SNI", "TOP"], ["6-star", "5-star", "4-star"])
+    print(tags)
+    # --------------------------------
+    # --------------------------------
     print("--test--")
     db_tools.close_db()
 
