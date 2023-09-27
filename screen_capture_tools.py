@@ -25,9 +25,9 @@ def get_window_titles():
 
 
 class Tools:
-    def __init__(self, window_name="", img_width=800, img_height=450, exit_key="q"):
+    def __init__(self, window_name="", img_width=800, img_height=450, exit_key="q", pytesseract_directory=r'C:\Program Files\Tesseract-OCR\tesseract.exe'):
         # pytesseract directory
-        pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+        pytesseract.pytesseract.tesseract_cmd = pytesseract_directory
         self.width = img_width
         self.height = img_height
         self.screen_cap_name = "Screen Capture"
