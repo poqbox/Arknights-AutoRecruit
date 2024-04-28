@@ -69,7 +69,7 @@ tag_positions_list = [[(563, 540), (778, 608)],
                       [(563, 648),  (778, 716)],
                       [(813, 648),  (1028, 716)]
                       ]
-recruit_tools = recruitment_database_tools.tools()
+recruit_tools = recruitment_database_tools.Tools()
 all_tags_list = recruit_tools.tag_dict.values()
 available_tags = []
 time.sleep(2)

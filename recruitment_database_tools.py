@@ -5,7 +5,7 @@ import sqlite3
 # SQLite documentation: https://www.sqlite.org/datatype3.html
 
 
-class tools:
+class Tools:
     def __init__(self):
         self.con = sqlite3.connect("Recruit.db")
         self.cur = self.con.cursor()
@@ -49,19 +49,18 @@ class tools:
         }
         # retrieve recruitment data
 
-
     def open_db(self):
         self.con = sqlite3.connect("Recruit.db")
         self.cur = self.con.cursor()
 
+    def close_db(self):
+        self.con.close()
 
     def create_table_Operators(self):
         self.cur.execute("create table Operators(id INTEGER, rarity INTEGER, name TEXT, tags TEXT, PRIMARY KEY (id))")
 
-
     def create_table_Tags(self):
         self.cur.execute("create table Tags(code TEXT, tag TEXT, type TEXT, PRIMARY KEY (code))")
-
 
     def initial_Operators_inserts(self):
         data6 = [
@@ -199,7 +198,6 @@ class tools:
         self.cur.executemany("insert into Operators values(?, ?, ?, ?)", data6)
         self.con.commit()
 
-
     def initial_Tags_inserts(self):
         data1 = [
             ("ROB", "Robot", "Qual"),
@@ -237,12 +235,11 @@ class tools:
             ("SPT", "Support", "Spec"),
             ("SRV", "Survival", "Spec")
         ]
-        cur.executemany("insert into Tags values(?, ?, ?)", data1)
-        cur.executemany("insert into Tags values(?, ?, ?)", data2)
-        cur.executemany("insert into Tags values(?, ?, ?)", data3)
-        cur.executemany("insert into Tags values(?, ?, ?)", data4)
-        con.commit()
-
+        self.cur.executemany("insert into Tags values(?, ?, ?)", data1)
+        self.cur.executemany("insert into Tags values(?, ?, ?)", data2)
+        self.cur.executemany("insert into Tags values(?, ?, ?)", data3)
+        self.cur.executemany("insert into Tags values(?, ?, ?)", data4)
+        self.con.commit()
 
     def view_all_tables(self):
         """
@@ -253,7 +250,6 @@ class tools:
         table_list = self.cur.fetchall()
         for row in table_list:
             print(row[0])
-
 
     def split_tags(self, tags_keys: str):
         """
@@ -270,7 +266,6 @@ class tools:
             tags_list.append(tag)
         return tags_list
 
-
     def decode_tags(self, tags_keys: str):
         """
         Splits a string of coded tags into their full-named tags\n
@@ -286,7 +281,6 @@ class tools:
             tags_full.append(self.tag_dict.get(tag))
         return tags_full
 
-
     def get_operator_data(self, get: list, where=None, sort_order=None, limit=None, offset=None, get_full_tags=False, reduce_nested_lists=False):
         """
         get: "id"|"rarity|"name"|"tags"\n
@@ -295,7 +289,6 @@ class tools:
         order: "asc"|"desc"\n
         """
         operator_list = []
-        query = ""
         # SELECT statement
         columns = []
         col_list = ["id", "rarity", "name", "tags"]
@@ -332,7 +325,6 @@ class tools:
                 operator_list[i][tag_col] = self.decode_tags(operator_list[i][tag_col])
         return operator_list
 
-
     def insert_new_operator(self, operator_name: str, rarity: int, tag_list):
         """
         tags is a list of tag codes. Refer to the tags legend for the code of each tag.
@@ -346,12 +338,11 @@ class tools:
                 return
         operator_tags = "".join(tag_list)
         if self.cur.execute("select count(*) from Operators where rarity=?", [str(rarity)]).fetchone()[0] == 0:
-            id = (rarity * 4) + 1
+            op_id = (rarity * 4) + 1
         else:
-            id = self.cur.execute("select id from Operators where rarity=? order by id desc limit 1", [str(rarity)]).fetchone()[0] + 1
-        self.cur.execute("insert into Operators values (?, ?, ?, ?)", (str(id), str(rarity), operator_name, operator_tags))
+            op_id = self.cur.execute("select id from Operators where rarity=? order by id desc limit 1", [str(rarity)]).fetchone()[0] + 1
+        self.cur.execute("insert into Operators values (?, ?, ?, ?)", (str(op_id), str(rarity), operator_name, operator_tags))
         self.con.commit()
-
 
     def update_operator(self, orig_id=None, orig_name=None, new_name=None, new_tags=[]):
         """
@@ -378,7 +369,7 @@ class tools:
             print('Could not locate operator name "' + orig_name + '"')
             print("The table will not be updated")
             return
-        # return if orig_name is being used, but there are more than one operators with the same name
+        # return if orig_name is being used, but there are more than one operator with the same name
         if orig_id == None and orig_name != None:
             op_id = []
             res = self.cur.execute("select id, name from Operators")
@@ -436,11 +427,9 @@ class tools:
             return
         print("Error: the table could not be updated")
 
-
-    def delete_operator(self, id):
-        self.cur.execute("delete from Operators where id=?", (str(id)))
+    def delete_operator(self, operator_id):
+        self.cur.execute("delete from Operators where id=?", (str(operator_id)))
         self.con.commit()
-
 
     def get_unique_tags(self, rarity: int):
         """
@@ -454,7 +443,6 @@ class tools:
                     tags_list.append(tags)
         return tags_list
 
-
     def get_non_distinctions_tags(self):
         """
         Returns a list of tag codes
@@ -466,15 +454,10 @@ class tools:
                 rarity_2_3_tags_list.append(tags)
         return rarity_2_3_tags_list
 
-
-    def close_db(self):
-        self.con.close()
-
-
-    def get_list_of_combinations(self, item_list, combination_size: int):
+    def get_list_of_combinations(self, tags_list, combination_size: int):
         def combination_util(item_list, k):
             if k == 0:
-                return[[]]
+                return [[]]
             coms_list = []
             for i in range(len(item_list)):
                 item = item_list[i]
@@ -484,9 +467,8 @@ class tools:
                     coms_list.append([item, *j])
             return coms_list
 
-        combinations_list = combination_util(item_list, combination_size)
+        combinations_list = combination_util(tags_list, combination_size)
         return combinations_list
-
 
     def calculate(self):
         """
@@ -515,8 +497,8 @@ class tools:
                 recruitment_tags.append(tag_combos)
             return recruitment_tags
 
-        def write_to_text_file(list):
-            for row in list:
+        def write_to_text_file(tag_combos):
+            for row in tag_combos:
                 line = ""
                 for combo in row:
                     line = line + ",".join(combo) + "|"
@@ -531,9 +513,9 @@ class tools:
         non_dist_combos = []
         # merge r2 and r3 without duplicates
         for i in range(len(r2_tag_combos)):
-            row = list(r2_tag_combos[i])
-            row.extend(x for x in r3_tag_combos[i] if x not in row)
-            non_dist_combos.append(row)
+            combos = list(r2_tag_combos[i])
+            combos.extend(x for x in r3_tag_combos[i] if x not in combos)
+            non_dist_combos.append(combos)
         # save as persistent data
         file.write("non_dist\n")
         write_to_text_file(non_dist_combos)
@@ -545,11 +527,11 @@ class tools:
         r4_tag_combos_dist = []
         # remove r2 and r3 combos from r4
         for i in range(len(r4_tag_combos)):
-            row = []
+            combos = []
             for x in r4_tag_combos[i]:
                 if x not in non_dist_combos[i]:
-                    row.append(x)
-            r4_tag_combos_dist.append(row)
+                    combos.append(x)
+            r4_tag_combos_dist.append(combos)
         # save as persistent data
         file.write("r4\n")
         write_to_text_file(r4_tag_combos_dist)
@@ -561,12 +543,12 @@ class tools:
         r5_tag_combos_dist = []
         # remove r2, r3, and r4 combos from r5
         for i in range(len(r5_tag_combos)):
-            row = []
+            combos = []
             for x in r5_tag_combos[i]:
                 if x not in non_dist_combos[i]:
                     if x not in r4_tag_combos_dist[i]:
-                        row.append(x)
-            r5_tag_combos_dist.append(row)
+                        combos.append(x)
+            r5_tag_combos_dist.append(combos)
         # save as persistent data
         file.write("r5\n")
         write_to_text_file(r5_tag_combos_dist)
@@ -578,16 +560,16 @@ class tools:
         # remove r2, r3, r4, and r5 combos from r6
         r6_tag_combos_dist = []
         for i in range(len(r6_tag_combos)):
-            row = []
+            combos = []
             for x in r6_tag_combos[i]:
                 if x not in non_dist_combos[i]:
                     if x not in r4_tag_combos_dist[i]:
                         if x not in r5_tag_combos_dist[i]:
-                            row.append(x)
-            r6_tag_combos_dist.append(row)
+                            combos.append(x)
+            r6_tag_combos_dist.append(combos)
         # remove combinations that do not contain TOP OPERATOR
-        for i, row in enumerate(r6_tag_combos_dist):
-            row_temp = [x for x in row if "TOP" in x]
+        for i, combos in enumerate(r6_tag_combos_dist):
+            row_temp = [x for x in combos if "TOP" in x]
             r6_tag_combos_dist[i] = row_temp
         # save as persistent data
         file.write("r6\n")
@@ -595,13 +577,12 @@ class tools:
         file.close()
         self.r6_tag_combos_dist = r6_tag_combos_dist
 
-
     def test_for_overlap_in_tag_combos(self):
         # test combinations including non_dist_combos
-        intersect = [ [] for _ in range(3)]
-        intersect[0] = [ [] for _ in range(3)]
-        intersect[1] = [ [] for _ in range(2)]
-        intersect[2] = [ [] for _ in range(1)]
+        intersect = [[] for _ in range(3)]
+        intersect[0] = [[] for _ in range(3)]
+        intersect[1] = [[] for _ in range(2)]
+        intersect[2] = [[] for _ in range(1)]
         for i, row in enumerate(self.non_dist_combos):
             # non_dist[i] and r4[i]
             intersect[0][0].append([x for x in row if x in self.r4_tag_combos_dist[i]])
@@ -626,6 +607,7 @@ class tools:
                         overlapping_combos.append(intersect[i][j][k])
                 if overlapping_combos:
                     overlap = True
+                    row = []
                     if i == 0:
                         print("Overlap found between non_dist and r" + str(j+4) + ":")
                         for row in overlapping_combos:
@@ -634,13 +616,12 @@ class tools:
                                 print(combo)
                     else:
                         print("Overlap found between r" + str(i+4) + " and r" + str(j+4) + ":")
-                        for combo in overlapping_combos:
+                        for _ in overlapping_combos:
                             for combo in row:
                                 print("\t", end="")
                                 print(combo)
         if not overlap:
             print("No overlapping tag combinations found")
-
 
     def get_recruit_data_from_text_file(self):
         """
@@ -683,7 +664,6 @@ class tools:
             r6_tag_combos_dist = read_util()
         return non_dist_combos, r4_tag_combos_dist, r5_tag_combos_dist, r6_tag_combos_dist
 
-
     def find_available_combos(self, available_tags: list, sample_group: list):
         """
         Returns a list of possible tag combinations\n
@@ -704,7 +684,7 @@ class tools:
                 available_combos.append(combo)
         return available_combos
 
-    def find_best_tags(self, available_tags: list, priority_tags: list=None):
+    def find_best_tags(self, available_tags: list, priority_tags: list = None):
         """
         If priority_tags is empty, chooses the least number of tags for the highest available rarity\n
         If invalid tags are given, they will be removed from the list before searching
@@ -747,9 +727,6 @@ class tools:
             if possible_combos:
                 return possible_combos[0], rarity
         return None
-
-
-
 
     # [Where Vernal Winds Will Never Blow] update
     # Recruitment updates typically happen during events with limited-time operators
@@ -815,7 +792,7 @@ def test():
                 print("\t", end="")
                 print(combo)
 
-    db_tools = tools()
+    db_tools = Tools()
     # test code here
     print("--test--")
     # --------------------------------

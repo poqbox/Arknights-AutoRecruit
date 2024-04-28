@@ -377,7 +377,7 @@ def swap_frame_grids(old_frame: ttk.Frame, new_frame: ttk.Frame):
 
 screen_res = (1920, 1080)
 scr_mdpt = (int(screen_res[0] / 2), int(screen_res[1] / 2))
-recruit_tools = recruitTools.tools()
+recruit_tools = recruitTools.Tools()
 
 root = tkTools.MainWindow(auto_recruit_window_name, window_size=(992, 450), min_size=(500, 200))
 tkTools.grid_setup(root,
@@ -1078,7 +1078,8 @@ def database_tools_widgets():
                         operator_data_label = tkTools.Label(delete_operator_window, display_text=operator_data_str, width=200)
                         operator_data_label.pack(side="top")
                         confirm_button = tkTools.Button(delete_operator_window, display_text="CONFIRM",
-                                                        function_when_clicked=lambda: [recruit_tools.delete_operator(id=int(operator_id)), delete_operator_window.destroy(), delete_operator_window.update(), recruit_tools.calculate(), configure_tables()])
+                                                        function_when_clicked=lambda: [recruit_tools.delete_operator(
+                                                            operator_id=int(operator_id)), delete_operator_window.destroy(), delete_operator_window.update(), recruit_tools.calculate(), configure_tables()])
                         confirm_button.pack(side="top")
                     cancel_button = tkTools.Button(delete_operator_window, display_text="CANCEL", function_when_clicked=lambda: [delete_operator_window.destroy(), delete_operator_window.update()])
                     cancel_button.pack(side="top")
