@@ -351,7 +351,7 @@ class Tools:
         new_tags is a list of tag codes. Refer to the tags legend for the code of each tag.
         """
         # return if identifiers are not provided
-        if orig_id == None and orig_name == None:
+        if orig_id is None and orig_name is None:
             print("One of the following was not provided: orig_id, orig_name")
             print("The table will not be updated")
             return
@@ -360,17 +360,17 @@ class Tools:
         res = self.cur.execute("select name from Operators")
         names_list = [name[0] for name in res]
         # return if orig_id could not be located
-        if orig_id != None and orig_id not in ids_list:
+        if orig_id is not None and orig_id not in ids_list:
             print("Could not locate ID", orig_id)
             print("The table will not be updated")
             return
         # return if orig_name could not be located
-        if orig_name != None and orig_name not in names_list:
+        if orig_name is not None and orig_name not in names_list:
             print('Could not locate operator name "' + orig_name + '"')
             print("The table will not be updated")
             return
         # return if orig_name is being used, but there are more than one operator with the same name
-        if orig_id == None and orig_name != None:
+        if orig_id is None and orig_name is not None:
             op_id = []
             res = self.cur.execute("select id, name from Operators")
             for row in res:
@@ -385,7 +385,7 @@ class Tools:
                 print(*op_id)
                 return
         # return if new entities are not provided
-        if new_name == None and new_tags == None:
+        if new_name is None and new_tags is None:
             print("At least one of the following was not provided: new_name, new_tags")
             print("The table will not be updated")
             return
@@ -393,7 +393,7 @@ class Tools:
         # update operator
         provided_entities = [False, False]
         entities = []
-        if new_name != None:
+        if new_name is not None:
             provided_entities[0] = True
             entities.append(new_name)
         if new_tags:
@@ -415,12 +415,12 @@ class Tools:
                 if i == 1:
                     query += "tags=?, "
         query = query[:-2]
-        if orig_id != None:
+        if orig_id is not None:
             entities.append(orig_id)
             self.cur.execute(query + " where id=?", entities)
             self.con.commit()
             return
-        elif orig_name != None:
+        elif orig_name is not None:
             entities.append(orig_name)
             self.cur.execute(query + " where name=?", entities)
             self.con.commit()
@@ -694,7 +694,7 @@ class Tools:
         available_tags = [x for x in self.tag_legend if x in available_tags]
 
         # if priority_tags is None or empty, find in the order [6-star, 5-star, 4-star, None]
-        if priority_tags == None or not priority_tags:
+        if priority_tags is None or not priority_tags:
             # order available_tags based on self.tag_legend
             possible_r6_combos = self.find_available_combos(available_tags, [combo for sub_list in self.r6_tag_combos_dist for combo in sub_list])
             if possible_r6_combos:
