@@ -1,53 +1,78 @@
+import os
 import sqlite3
 # import sqlite3tools as sql
 
 
 # SQLite documentation: https://www.sqlite.org/datatype3.html
 
+# tag dictionaries
+tagsQual_dict = {
+    "ROB": "Robot",
+    "STR": "Starter",
+    "SEN": "Senior Operator",
+    "TOP": "Top Operator"
+}
+tagsPos_dict = {
+    "MEL": "Melee",
+    "RNG": "Ranged"
+}
+tagsClass_dict = {
+    "CAS": "Caster",
+    "DEF": "Defender",
+    "GUA": "Guard",
+    "MED": "Medic",
+    "SNI": "Sniper",
+    "SPE": "Specialist",
+    "SUP": "Supporter",
+    "VAN": "Vanguard"
+}
+tagsSpec_dict = {
+    "AOE": "AoE",
+    "CDC": "Crowd-Control",
+    "DBF": "Debuff",
+    "DFS": "Defense",
+    "DPR": "DP-Recovery",
+    "DPS": "DPS",
+    "FRD": "Fast-Redeploy",
+    "HEA": "Healing",
+    "NUK": "Nuker",
+    "SFT": "Shift",
+    "SLW": "Slow",
+    "SMN": "Summon",
+    "SPT": "Support",
+    "SRV": "Survival"
+}
 
-class Tools:
+# complete code->tag dictionary
+tag_dict = tagsQual_dict.copy()
+tag_dict.update(tagsPos_dict)
+tag_dict.update(tagsClass_dict)
+tag_dict.update(tagsSpec_dict)
+
+# lists of codes
+tagsQual_keysList = list(tagsQual_dict.keys())
+tagsPos_keysList = list(tagsPos_dict.keys())
+tagsClass_keysList = list(tagsClass_dict.keys())
+tagsSpec_keysList = list(tagsSpec_dict.keys())
+
+# lists of tags
+tagsQual_valuesList = list(tagsQual_dict.values())
+tagsPos_valuesList = list(tagsPos_dict.values())
+tagsClass_valuesList = list(tagsClass_dict.values())
+tagsSpec_valuesList = list(tagsSpec_dict.values())
+
+# complete list of tag codes
+tag_legend = tagsQual_keysList[:]
+tag_legend.extend(tagsPos_keysList)
+tag_legend.extend(tagsClass_keysList)
+tag_legend.extend(tagsSpec_keysList)
+
+
+class Database:
     def __init__(self):
         self.con = sqlite3.connect("Recruit.db")
         self.cur = self.con.cursor()
         self.non_dist_combos, self.r4_tag_combos_dist, self.r5_tag_combos_dist, self.r6_tag_combos_dist = self.get_recruit_data_from_text_file()
-        self.tag_legend = (
-            "ROB", "STR", "SEN", "TOP",
-            "MEL", "RNG",
-            "CAS", "DEF", "GUA", "MED",
-            "SNI", "SPE", "SUP", "VAN",
-            "AOE", "CDC", "DBF", "DFS", "DPR", "DPS", "FRD", "HEA", "NUK", "SFT", "SLW", "SMN", "SPT", "SRV"
-        )
-        self.tag_dict = {
-            "ROB": "Robot",
-            "STR": "Starter",
-            "SEN": "Senior Operator",
-            "TOP": "Top Operator",
-            "MEL": "Melee",
-            "RNG": "Ranged",
-            "CAS": "Caster",
-            "DEF": "Defender",
-            "GUA": "Guard",
-            "MED": "Medic",
-            "SNI": "Sniper",
-            "SPE": "Specialist",
-            "SUP": "Supporter",
-            "VAN": "Vanguard",
-            "AOE": "AoE",
-            "CDC": "Crowd-Control",
-            "DBF": "Debuff",
-            "DFS": "Defense",
-            "DPR": "DP-Recovery",
-            "DPS": "DPS",
-            "FRD": "Fast-Redeploy",
-            "HEA": "Healing",
-            "NUK": "Nuker",
-            "SFT": "Shift",
-            "SLW": "Slow",
-            "SMN": "Summon",
-            "SPT": "Support",
-            "SRV": "Survival"
-        }
-        # retrieve recruitment data
 
     def open_db(self):
         self.con = sqlite3.connect("Recruit.db")
@@ -93,7 +118,7 @@ class Tools:
         while tags_keys:
             tag = tags_keys[0:3]
             tags_keys = tags_keys[3:]
-            tags_full.append(self.tag_dict.get(tag))
+            tags_full.append(tag_dict.get(tag))
         return tags_full
 
     def get_operator_data(self, get: list, where=None, sort_order=None, limit=None, offset=None, get_full_tags=False, reduce_nested_lists=False):
@@ -148,7 +173,7 @@ class Tools:
             print("Please select some tags")
             return
         for tag in tag_list:
-            if tag not in self.tag_legend:
+            if tag not in tag_legend:
                 print("One of the tags is not a valid tag")
                 return
         operator_tags = "".join(tag_list)
@@ -213,7 +238,7 @@ class Tools:
             entities.append(new_name)
         if new_tags:
             for tag in new_tags:
-                if tag not in self.tag_legend:
+                if tag not in tag_legend:
                     print("At least one of the tags is not a valid tag")
                     print("The table will not be updated")
                     return
@@ -460,7 +485,7 @@ class Tools:
                 list.append(combo)
             return list
 
-        file = open("recruitment_combinations.txt", "r")
+        file = open(os.path.join(os.path.dirname(__file__), "recruitment_combinations.txt"), "r")
         # read non-distinction tags
         non_dist_combos = []
         if file.readline() == "non_dist\n":
@@ -485,7 +510,7 @@ class Tools:
         If invalid tags are given, they will be removed from the list before searching
         """
         # organize available_tags
-        available_tags = [x for x in self.tag_legend if x in available_tags]
+        available_tags = [x for x in tag_legend if x in available_tags]
         possible_combos = []
         possible_combos.extend(self.get_list_of_combinations(available_tags, 1))
         possible_combos.extend(self.get_list_of_combinations(available_tags, 2))
@@ -506,7 +531,7 @@ class Tools:
         Returns a tuple of a string of tags and the recruitment rarity
         """
         # organize available_tags
-        available_tags = [x for x in self.tag_legend if x in available_tags]
+        available_tags = [x for x in tag_legend if x in available_tags]
 
         # if priority_tags is None or empty, find in the order [6-star, 5-star, 4-star, None]
         if priority_tags is None or not priority_tags:
@@ -607,7 +632,7 @@ def test():
                 print("\t", end="")
                 print(combo)
 
-    db_tools = Tools()
+    db_tools = Database()
     # test code here
     print("--test--")
     # --------------------------------
