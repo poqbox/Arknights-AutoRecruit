@@ -32,10 +32,11 @@ class AutoRecruitFrame(tkTools.Frame):
         self.grid_remove()
 
     def widgets(self):
+        # Back button
         back_button = tkTools.Button(self, display_text="Back", function_when_clicked=tkTools.swap_frame(self, self.parent))
         back_button.grid(column=0, row=0, sticky="NW")
 
-        # output textbox
+        # Output textbox
         output_textbox = scrolledtext.ScrolledText(self, height=18)
         output_textbox.grid(column=1, row=1, sticky="NEW")
         output_text_font = font.nametofont(output_textbox.cget("font"))
@@ -58,6 +59,8 @@ class AutoRecruitFrame(tkTools.Frame):
                                                                                   output_indented_text(screen_capture_tools.get_window_titles()),
                                                                                   output_text("\n")])
         get_window_titles_button.pack(side="top", anchor="nw")
+
+        # Help window
         def open_help_window():
             help_window = tkTools.SubWindow(self.root, title="Instructions", window_size=(600, 400), background_color="white")
             # Text for [Using AutoRecruit]
@@ -156,8 +159,6 @@ class AutoRecruitFrame(tkTools.Frame):
         recruitment_permits_entry.pack(side="left", anchor="nw")
         recruitment_permits_entry.insert(0, profile.get_profile_option("permits_num"))
         # frame for recruitment_permits widgets --end--
-
-
         # frame for ordering tag priorities --start--
         priority_tags_frame = tkTools.Frame(settings_frame)
         priority_tags_frame.pack(side="top", anchor="nw")
@@ -247,8 +248,6 @@ class AutoRecruitFrame(tkTools.Frame):
         clear_selection_button = tkTools.Button(priority_tags_frame, display_text="Clr", width=4, function_when_clicked=lambda: clear_selection())
         clear_selection_button.grid(column=1, row=3)
         # frame for ordering tag priorities --end--
-
-
         recruitment_time_spinbox = tkTools.Spinbox(settings_frame, values=recruitment_times_list, width=8, state="readonly")
         recruitment_time_spinbox.pack(side="top", anchor="nw")
         recruitment_time_spinbox.set(profile.get_profile_option("recruitment_time"))
@@ -271,6 +270,7 @@ class AutoRecruitFrame(tkTools.Frame):
             profile.save_profile()
         save_button = tkTools.Button(settings_frame, display_text="Save", function_when_clicked=lambda: update_profile())
         save_button.pack(side="top", anchor="nw")
+        # Start Automation button
         start_button = tkTools.Button(settings_frame, display_text="Start",
                                       function_when_clicked=lambda: AutoRecruit.start_AutoRecruit(
                                           emulator_path_entry.get(),

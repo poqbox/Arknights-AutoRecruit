@@ -4,6 +4,7 @@ import sqlite3
 
 
 # SQLite documentation: https://www.sqlite.org/datatype3.html
+# Recruit-able operator data obtained from: https://arknights.wiki.gg/wiki/Recruitment/Operators
 
 # tag dictionaries
 tagsQual_dict = {

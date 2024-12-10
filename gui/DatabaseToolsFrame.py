@@ -32,13 +32,12 @@ class DatabaseToolsFrame(tkTools.Frame):
         self.grid_remove()
 
     def widgets(self):
+        # Back button
         back_button = tkTools.Button(self, display_text="Back",
                                      function_when_clicked=lambda: [tkTools.swap_frame(self, self.parent, _use_with_lambda_function=True), self.root.database.calculate()])
         back_button.grid(column=0, row=0, sticky="NW")
 
-        # initial operator form setup --start--
-
-        # frame containing the settings to add an operator to the database
+        # Operator Form setup --part 1--
         operator_form = tkTools.Frame(self)
         operator_form.grid(column=2, row=1, rowspan=2, sticky="NSEW")
         tkTools.grid_setup(operator_form,
@@ -56,7 +55,6 @@ class DatabaseToolsFrame(tkTools.Frame):
                                 [7, 30, None, None, 0]
                             ]
                            )
-
         # global variables and widgets for extra access
         nameVar = tkinter.StringVar()
         rarityVar = tkinter.StringVar()
@@ -109,14 +107,8 @@ class DatabaseToolsFrame(tkTools.Frame):
         tagsClass_lbox.pack(side="left", anchor="nw", padx=(0, 0))
         tagsSpec_lbox.pack(side="left", anchor="nw", padx=(0, 0))
 
-        # initial operator form setup --end--
-
-
-
-
         # table setups --start--
-
-        # table of recruitable operators
+        # Recruit-able Operators Table setup --start--
         operator_table = tkTools.Frame_with_scrollbar(self, sticky_scrollframe="NSEW",
                                                       sticky_content="NSEW", height=360, width=520,
                                                       grid_row=1, grid_column=1)
@@ -176,7 +168,7 @@ class DatabaseToolsFrame(tkTools.Frame):
         configure_operator_table()
         operator_table.grid_remove()
 
-        # table of tag combinations
+        # Tag Combinations Table setup --start--
         raw_tag_combos_text = scrolledtext.ScrolledText(self, height=18)
         raw_tag_combos_text.grid(column=1, row=1, sticky="NEW")
         def configure_tag_combinations_table():
@@ -224,11 +216,7 @@ class DatabaseToolsFrame(tkTools.Frame):
         def configure_tables():
             configure_operator_table()
             configure_tag_combinations_table()
-
         # table setups --end--
-
-
-
 
         # buttons to change the displayed data
         button_display_frame = tkTools.Frame(self)
@@ -256,7 +244,7 @@ class DatabaseToolsFrame(tkTools.Frame):
         help_button = tkTools.Button(button_display_frame, display_text="Help", function_when_clicked=lambda: open_help_window(), width=4)
         help_button.pack(side="top", anchor="nw")
 
-        # version frame
+        # version frame --start--
         version_frame = tkTools.Frame(self)
         version_frame.grid(column=0, row=2, columnspan=2, sticky="NSEW")
         version_text = "ver. " + config.get_autorecruit_version() + ".[" + config.get_database_version() + "]"
@@ -283,12 +271,9 @@ class DatabaseToolsFrame(tkTools.Frame):
             cancel_button.pack(side="top", anchor="nw")
         recruit_version_button = tkTools.Button(version_frame, display_text="Update Version", function_when_clicked=lambda: open_update_version_window())
         recruit_version_button.pack(side="bottom", anchor="sw")
+        # version frame --end--
 
-
-
-
-        # remaining operator form setup --start--
-
+        # Operator Form setup --part 2--
         def operator_form_widgets():
             # methods for implementing a default value in the name_entry widget
             def name_entry_default():
@@ -385,5 +370,4 @@ class DatabaseToolsFrame(tkTools.Frame):
             operator_id_entry.grid(column=0, row=6, sticky="SE")
             delete_operator_button = tkTools.Button(operator_form, display_text="Delete Operator", function_when_clicked=lambda: update_recruit_db("delete"))
             delete_operator_button.grid(column=0, row=7, sticky="SE")
-
-        # remaining operator form setup --end--
+        # Operator Form setup --end--
