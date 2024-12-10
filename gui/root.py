@@ -4,9 +4,10 @@ import gui.HomeFrame
 
 
 class Root(tkTools.MainWindow):
-    def __init__(self, auto_recruit_window_name="Auto Recruit", window_size=(992, 450), min_size=(500, 200)):
+    def __init__(self, auto_recruit_window_name="Auto Recruit", window_size=(992, 450), position=(100, 100), min_size=(500, 200)):
         super().__init__(title=auto_recruit_window_name,
                          window_size=window_size,
+                         position=position,
                          min_size=min_size)
         self.database = recruit_tools.Database()
         self.frame = None

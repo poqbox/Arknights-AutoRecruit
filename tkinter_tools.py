@@ -4,7 +4,7 @@ from typing import Literal
 
 
 class MainWindow(tkinter.Tk):
-    def __init__(self, title: str, window_size, min_size=None, max_size=None,
+    def __init__(self, title: str, window_size, min_size=None, max_size=None, position=None,
                  resizable_width=True, resizable_height=True):
         """
         Everything will be created within this object\n
@@ -14,10 +14,17 @@ class MainWindow(tkinter.Tk):
         # extends functionality from tkinter.Tk
         super().__init__()
         self.title(title)
-        if isinstance(window_size, str):
-            self.geometry(window_size)
+        if position:
+            if isinstance(position, str):
+                position = "+" + position
+            else:
+                position = "+" + "+".join(str(_) for _ in position[0:2])
         else:
-            self.geometry("x".join(str(_) for _ in window_size[0:2]))
+            position = ""
+        if isinstance(window_size, str):
+            self.geometry(window_size + position)
+        else:
+            self.geometry("x".join(str(_) for _ in window_size[0:2]) + position)
         if min_size:
             if isinstance(min_size, str):
                 xy = min_size.split("x")
@@ -37,7 +44,7 @@ Tk = MainWindow
 
 
 class SubWindow(tkinter.Toplevel):
-    def __init__(self, parent, title: str, window_size, min_size=None, max_size=None,
+    def __init__(self, parent, title: str, window_size, min_size=None, max_size=None, position=None,
                  resizable_width=True, resizable_height=True,
                  background_color=None, cursor_shape=None, pad_x=None, pad_y=None):
         """Creates a window over the parent window"""
@@ -50,10 +57,17 @@ class SubWindow(tkinter.Toplevel):
                          pady=pad_y
                          )
         self.title(title)
-        if isinstance(window_size, str):
-            self.geometry(window_size)
+        if position:
+            if isinstance(position, str):
+                position = "+" + position
+            else:
+                position = "+" + "+".join(str(_) for _ in position[0:2])
         else:
-            self.geometry("x".join(str(_) for _ in window_size[0:2]))
+            position = ""
+        if isinstance(window_size, str):
+            self.geometry(window_size + position)
+        else:
+            self.geometry("x".join(str(_) for _ in window_size[0:2]) + position)
         if min_size:
             if isinstance(min_size, str):
                 xy = min_size.split("x")
@@ -262,7 +276,7 @@ class Button(ttk.Button):
 
 class Checkbutton(ttk.Checkbutton):
     def __init__(self, parent, display_text: str = None, display_image=None, saveValueTo_variable=None,
-                 value_when_checked=1, value_when_unchecked=0, function_when_checked=None,
+                 value_when_checked: any = 1, value_when_unchecked: any = 0, function_when_checked=None,
                  width=None, padding=None, state=None, take_focus=None, style=None, cursor_shape=None,
                  grid_column=None, grid_row=None, grid_columnspan=None, grid_rowspan=None, grid_sticky="NSEW",
                  pack_side=None, pack_anchor=None, pack_fill=None, pack_expand=None,
@@ -314,7 +328,7 @@ class Checkbutton(ttk.Checkbutton):
 
 class Combobox(ttk.Combobox):
     def __init__(self, parent, values, saveValueTo_variable=None,
-                 validation_test: Literal["none", "focus", "focusin", "focusout", "key", "all"] = "none",
+                 validate_on: Literal["none", "focus", "focusin", "focusout", "key", "all"] = "none",
                  function_for_testing_validation=None, function_when_invalid=None,
                  text_alignment=None, font=None, text_color=None, background_color=None,
                  width=None, state=None, take_focus=None, style=None, cursor_shape=None,
@@ -339,7 +353,7 @@ class Combobox(ttk.Combobox):
                          style=style,
                          takefocus=take_focus,
                          textvariable=saveValueTo_variable,
-                         validate=validation_test,
+                         validate=validate_on,
                          validatecommand=function_for_testing_validation,
                          values=values,
                          width=width
@@ -369,7 +383,7 @@ class Combobox(ttk.Combobox):
 
 class Entry(ttk.Entry):
     def __init__(self, parent, saveValueTo_variable=None,
-                 validation_test: Literal["none", "focus", "focusin", "focusout", "key", "all"] = "none",
+                 validate_on: Literal["none", "focus", "focusin", "focusout", "key", "all"] = "none",
                  function_for_testing_validation=None, function_when_invalid=None,
                  font=None, text_color=None, background_color=None,
                  width=None, state=None, take_focus=None, style=None, cursor_shape=None,
@@ -394,7 +408,7 @@ class Entry(ttk.Entry):
                          style=style,
                          takefocus=take_focus,
                          textvariable=saveValueTo_variable,
-                         validate=validation_test,
+                         validate=validate_on,
                          validatecommand=function_for_testing_validation,
                          width=width
                          )
@@ -492,13 +506,14 @@ class Entry_with_default_value(ttk.Entry):
 class Label(ttk.Label):
     def __init__(self, parent, display_text: str = None,
                  text_alignment: Literal["left", "center", "right"] = "left", font=None, text_color=None, background_color=None,
-                 width=None, text_padding=None, state=None, take_focus=None, style=None, cursor_shape=None,
+                 width=None, text_padding=None, state=None, take_focus=None, style=None, backdrop=None, cursor_shape=None,
                  grid_column=None, grid_row=None, grid_columnspan=None, grid_rowspan=None, grid_sticky="NSEW",
                  pack_side=None, pack_anchor=None, pack_fill=None, pack_expand=None,
                  ipad_x=None, ipad_y=None, pad_x=None, pad_y=None):
         """
         Use either the grid_ or pack_ parameters to make the widget appear,
         or use the grid_configure or pack_configure functions
+        :param backdrop: Literal["raised", "sunken", "flat", "ridge", "solid", "groove"]
         """
 
         # text_alignment == "left"
@@ -520,6 +535,7 @@ class Label(ttk.Label):
                          foreground=text_color,
                          justify=justify,
                          padding=text_padding,
+                         relief=backdrop,
                          state=state,
                          style=style,
                          takefocus=take_focus,
@@ -1022,7 +1038,8 @@ class Spinbox(ttk.Spinbox):
 
 
 class Text(tkinter.Text):
-    def __init__(self, parent, text:str = None, wrap_on=None, font=None, text_color=None, background_color=None,
+    def __init__(self, parent, text:str = None, wrap_on: Literal["none", "char", "word"] = "word",
+                 font=None, text_color=None, background_color=None,
                  width=None, height=None, state=None, take_focus=None, backdrop=None, cursor_shape=None,
                  grid_column=None, grid_row=None, grid_columnspan=None, grid_rowspan=None, grid_sticky="NSEW",
                  pack_side=None, pack_anchor=None, pack_fill=None, pack_expand=None,
@@ -1040,7 +1057,6 @@ class Text(tkinter.Text):
                          foreground=text_color,
                          height=height,
                          relief=backdrop,
-                         state=state,
                          takefocus=take_focus,
                          width=width,
                          wrap=wrap_on
@@ -1069,6 +1085,14 @@ class Text(tkinter.Text):
                                 )
         if text:
             self.insert("end", text)
+        self.configure(state=state)
+
+    def output(self, text: str):
+        state = self["state"]
+        self.configure(state="normal")
+        self.insert("end", text + "\n")
+        self.configure(state=state)
+        self.update()
 
 
 class Frame_with_scrollbar(ttk.Frame):
