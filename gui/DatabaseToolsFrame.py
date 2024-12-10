@@ -371,3 +371,4 @@ class DatabaseToolsFrame(tkTools.Frame):
             delete_operator_button = tkTools.Button(operator_form, display_text="Delete Operator", function_when_clicked=lambda: update_recruit_db("delete"))
             delete_operator_button.grid(column=0, row=7, sticky="SE")
         # Operator Form setup --end--
+        operator_form_widgets()
