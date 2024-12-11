@@ -74,13 +74,3 @@
 #   - Can find the "Recruitment" label
 #       - Cannot find it when full-screen and not deskewed
 #       - Can find it when zoomed in on the label
-#
-# ------------------------------------------------------------------------------------------------
-# ------------------------------------------------------------------------------------------------
-# Special recruitment rules:
-#   - all 6-stars share the [Top Operator] tag (last checked: Il Siracusano event)
-#   - all 5-stars share the [Senior Operator] tag (last checked: Il Siracusano event)
-#   - all 2-stars share the [Starter] tag (last checked: Il Siracusano event)
-#   - all 1-stars share the [Robot] tag (last checked: Il Siracusano event)
-#   - 1-stars can be obtained without a [Robot] tag
-#   - 6-stars can only be obtained with a [Top Operator] tag

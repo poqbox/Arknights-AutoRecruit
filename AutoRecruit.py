@@ -22,6 +22,16 @@ import recruitment_database_tools as recruitTools
 #   not enough recruitment tickets
 #   not enough expedited plans
 
+# ------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------
+# Special recruitment rules:
+#   - all 6-stars share the [Top Operator] tag (last checked: Il Siracusano event)
+#   - all 5-stars share the [Senior Operator] tag (last checked: Il Siracusano event)
+#   - all 2-stars share the [Starter] tag (last checked: Il Siracusano event)
+#   - all 1-stars share the [Robot] tag (last checked: Il Siracusano event)
+#   - 1-stars can be obtained without a [Robot] tag
+#   - 6-stars can only be obtained with a [Top Operator] tag
+
 auto_recruit_window_name = "Auto Recruit"
 screen_res = (1920, 1080)
 scr_mdpt = (int(screen_res[0] / 2), int(screen_res[1] / 2))
