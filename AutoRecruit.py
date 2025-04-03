@@ -1,17 +1,13 @@
+from win32api import GetSystemMetrics
 import cv2
 import os
 import subprocess
 import time
 import win32gui
 from pynput.keyboard import Key, Listener
-import tkinter
-from tkinter import font
-from tkinter import scrolledtext
-from tkinter import ttk
-import tkinter_tools as tkTools
 import desktop_control as desktop
 import screen_capture_tools
-import recruitment_database_tools as recruitTools
+import recruitment_database_tools as recruit_tools
 
 # tested on Windows 11
 # pytesseract manual:  https://github.com/tesseract-ocr/tesseract/blob/main/doc/tesseract.1.asc
@@ -33,7 +29,7 @@ import recruitment_database_tools as recruitTools
 #   - 6-stars can only be obtained with a [Top Operator] tag
 
 auto_recruit_window_name = "Auto Recruit"
-screen_res = (1920, 1080)
+screen_res = (GetSystemMetrics(0), GetSystemMetrics(1))
 scr_mdpt = (int(screen_res[0] / 2), int(screen_res[1] / 2))
 
 
@@ -53,7 +49,7 @@ def launch_from_GooglePlayGames(emulator_path, emulator_title):
     # 'win32gui.SetForegroundWindow(emu_hdl)' causes the following error if it runs too soon
     #   pywintypes.error: (1400, 'SetForegroundWindow', 'Invalid window handle.')
     # win32gui.SetFocus(emu_hdl)  # cannot bring to focus, window must be attached to the calling thread's message queue
-    emu = screen_capture_tools.Tools(emulator_title)
+    emu = screen_capture_tools.SourceWindow(emulator_title)
     pt1, pt2 = emu.get_window_position()
 
     # find and go to "Library" tab
@@ -106,13 +102,13 @@ def start_AutoRecruit(emulator_path: str, emulator_title: str, recruit_num: int=
     if launched_Arknights:
         Arknights = None
         if skip_emulator_launch:
-            Arknights = screen_capture_tools.Tools("Arknights")
+            Arknights = screen_capture_tools.SourceWindow("Arknights")
             ark_hdl = win32gui.FindWindow(None, "Arknights")
             win32gui.SetForegroundWindow(ark_hdl)
             time.sleep(0.5)
         else:
             time.sleep(10)
-            Arknights = screen_capture_tools.Tools("Arknights")
+            Arknights = screen_capture_tools.SourceWindow("Arknights")
             desktop.left_click(scr_mdpt[0], scr_mdpt[1])
             time.sleep(5)
             entered_Arknights_home_page = False
@@ -155,6 +151,7 @@ def start_AutoRecruit(emulator_path: str, emulator_title: str, recruit_num: int=
                 allTags_dict = recruit_tools.tag_dict
                 allTag_valuesList = list(allTags_dict.values())
                 allTag_keysList = list(allTags_dict.keys())
+                recruitment_db = recruit_tools.Database()
                 # begin recruitment loop
                 for i in range(recruit_num):
                     # enter recruit setup
@@ -188,7 +185,7 @@ def start_AutoRecruit(emulator_path: str, emulator_title: str, recruit_num: int=
                             win32gui.SetForegroundWindow(auto_hdl)
                             return
                     # determine best tag combination
-                    result = recruit_tools.find_best_tags(available_tags, priority_tags)
+                    result = recruitment_db.find_best_tags(available_tags, priority_tags)
                     if result == None:
                         # adjust time
                         hours = int(recruit_time[0:2])

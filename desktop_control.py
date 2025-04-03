@@ -1,5 +1,8 @@
-import pyautogui
+import math
 
+import numpy
+import pyautogui
+from numpy import random
 
 # INFO
 def get_screen_size():
@@ -126,3 +129,36 @@ def press_hotkey(*keys):
 
 def write(text, interval_between_key_presses=0.0):
     pyautogui.write(text, interval=interval_between_key_presses, _pause=False)
+
+
+# UTIL
+class RandomNumberGenerator:
+    def __init__(self):
+        self.rng = random.default_rng()
+
+    def __get_mean_and_sd(self, max_value):
+        mean = max_value/2
+        sd = max_value * 0.3
+        return mean, sd
+
+    def xy_normal_distribution_sample(self, bounding_box):
+        """
+        bounding_box should be a tuple with the top-left and bottom-right points
+        bounding_box = (x1, y1), (x2, y2)
+        """
+        x_mean, x_sd = self.__get_mean_and_sd(bounding_box[1][0] - bounding_box[0][0])
+        y_mean, y_sd = self.__get_mean_and_sd(bounding_box[1][1] - bounding_box[0][1])
+        x = math.floor(self.rng.normal(x_mean, x_sd))
+        y = math.floor(self.rng.normal(y_mean, y_sd))
+        while x < 0:
+            x = math.floor(self.rng.normal(x_mean, x_sd))
+        while y < 0:
+            y = math.floor(self.rng.normal(y_mean, y_sd))
+        return x + bounding_box[0][0], y + bounding_box[0][1]
+
+    def click_delay_sample(self, delay_range_in_sec=1, num_of_decimals=2):
+        mean, sd = self.__get_mean_and_sd(delay_range_in_sec)
+        delay = self.rng.normal(mean, sd)
+        while delay < 0:
+            delay = self.rng.normal(mean, sd)
+        return numpy.round(delay, num_of_decimals)
